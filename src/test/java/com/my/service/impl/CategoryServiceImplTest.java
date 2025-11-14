@@ -1,0 +1,307 @@
+package com.my.service.impl;
+
+import com.my.model.Category;
+import com.my.model.Product;
+import com.my.model.ProductFilter;
+import com.my.repository.CategoryRepository;
+import com.my.service.CacheService;
+import com.my.service.CategoryService;
+import com.my.service.ProductService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class CategoryServiceImplTest {
+    @Mock
+    private CategoryRepository categoryRepository;
+
+    @Mock
+    private CacheService cacheService;
+
+    @Mock
+    private ProductService productService;
+
+    private CategoryService categoryService;
+
+    @BeforeEach
+    void setUp() {
+        categoryService = new CategoryServiceImpl(categoryRepository, cacheService, productService);
+    }
+
+    @Test
+    void testGetAllWithCache() {
+        List<Category> expectedCategories = List.of(
+                new Category(1L, "Category 1"),
+                new Category(2L, "Category 2")
+        );
+
+        when(cacheService.get("ALL_CATEGORIES")).thenReturn(null);
+        when(categoryRepository.getAll()).thenReturn(expectedCategories);
+
+        List<Category> result = categoryService.getAll();
+
+        assertThat(result).isEqualTo(expectedCategories);
+        verify(cacheService).put("ALL_CATEGORIES", expectedCategories);
+    }
+
+    @Test
+    void testGetAllFromCache() {
+        List<Category> cachedCategories = List.of(
+                new Category(1L, "Cached Category 1"),
+                new Category(2L, "Cached Category 2")
+        );
+
+        when(cacheService.get("ALL_CATEGORIES")).thenReturn(cachedCategories);
+
+        List<Category> result = categoryService.getAll();
+
+        assertThat(result).isEqualTo(cachedCategories);
+        verify(categoryRepository, never()).getAll();
+    }
+
+    @Test
+    void testGetByIdWithCache() {
+        Category expectedCategory = new Category(1L, "Test Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(null);
+        when(categoryRepository.getById(1L)).thenReturn(Optional.of(expectedCategory));
+
+        Category result = categoryService.getById(1L);
+
+        assertThat(result).isEqualTo(expectedCategory);
+        verify(cacheService).put("CATEGORY1", expectedCategory);
+    }
+
+    @Test
+    void testGetByIdFromCache() {
+        Category cachedCategory = new Category(1L, "Cached Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(cachedCategory);
+
+        Category result = categoryService.getById(1L);
+
+        assertThat(result).isEqualTo(cachedCategory);
+        verify(categoryRepository, never()).getById(any());
+    }
+
+    @Test
+    void testGetByIdNotFound() {
+        when(cacheService.get("CATEGORY1")).thenReturn(null);
+        when(categoryRepository.getById(1L)).thenReturn(Optional.empty());
+
+        Category result = categoryService.getById(1L);
+
+        assertThat(result).isNull();
+        verify(cacheService, never()).put(any(), any());
+    }
+
+    @Test
+    void testSaveSuccess() {
+        Category categoryToSave = new Category("New Category");
+        Category savedCategory = new Category(1L, "New Category");
+
+        when(categoryRepository.existsByNameIgnoreCase("New Category")).thenReturn(false);
+        when(categoryRepository.save(categoryToSave)).thenReturn(savedCategory);
+
+        Category result = categoryService.save(categoryToSave);
+
+        assertThat(result).isEqualTo(savedCategory);
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+
+    @Test
+    void testSaveWithExistingName() {
+        Category categoryToSave = new Category("Existing Category");
+
+        when(categoryRepository.existsByNameIgnoreCase("Existing Category")).thenReturn(true);
+
+        Category result = categoryService.save(categoryToSave);
+
+        assertThat(result).isNull();
+        verify(categoryRepository, never()).save(any());
+        verify(cacheService, never()).invalidate(any());
+    }
+
+    @Test
+    void testUpdateSuccess() {
+        Category existingCategory = new Category(1L, "Old Category");
+        Category sourceCategory = new Category("Updated Category");
+        Category updatedCategory = new Category(1L, "Updated Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(existingCategory);
+        when(categoryRepository.existsByNameIgnoreCase("Updated Category")).thenReturn(false);
+        when(categoryRepository.update(existingCategory)).thenReturn(updatedCategory);
+
+        Category result = categoryService.update(1L, sourceCategory);
+
+        assertThat(result).isEqualTo(updatedCategory);
+        assertThat(existingCategory.getName()).isEqualTo("Updated Category");
+        verify(cacheService).invalidate("CATEGORY1");
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+
+    @Test
+    void testUpdateWhenCategoryNotInCache() {
+        Category existingCategory = new Category(1L, "Old Category");
+        Category sourceCategory = new Category("Updated Category");
+        Category updatedCategory = new Category(1L, "Updated Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(null);
+        when(categoryRepository.getById(1L)).thenReturn(Optional.of(existingCategory));
+        when(categoryRepository.existsByNameIgnoreCase("Updated Category")).thenReturn(false);
+        when(categoryRepository.update(existingCategory)).thenReturn(updatedCategory);
+
+        Category result = categoryService.update(1L, sourceCategory);
+
+        assertThat(result).isEqualTo(updatedCategory);
+        verify(cacheService).invalidate("CATEGORY1");
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+
+    @Test
+    void testUpdateNotFound() {
+        Category sourceCategory = new Category("Updated Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(null);
+        when(categoryRepository.getById(1L)).thenReturn(Optional.empty());
+
+        Category result = categoryService.update(1L, sourceCategory);
+
+        assertThat(result).isNull();
+        verify(categoryRepository, never()).update(any());
+        verify(cacheService, never()).invalidate(any());
+    }
+
+    @Test
+    void testUpdateWithExistingName() {
+        Category existingCategory = new Category(1L, "Old Category");
+        Category sourceCategory = new Category("Existing Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(existingCategory);
+        when(categoryRepository.existsByNameIgnoreCase("Existing Category")).thenReturn(true);
+
+        Category result = categoryService.update(1L, sourceCategory);
+
+        assertThat(result).isNull();
+        verify(categoryRepository, never()).update(any());
+        verify(cacheService, never()).invalidate(any());
+    }
+
+    @Test
+    void testDeleteByIdSuccess() {
+        when(productService.getAll(any(ProductFilter.class))).thenReturn(List.of());
+        when(categoryRepository.deleteById(1L)).thenReturn(true);
+
+        boolean result = categoryService.deleteById(1L);
+
+        assertThat(result).isTrue();
+        verify(cacheService).invalidate("CATEGORY1");
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+
+    @Test
+    void testDeleteByIdWithProducts() {
+        Product product = new Product();
+        when(productService.getAll(any(ProductFilter.class))).thenReturn(List.of(product));
+
+        boolean result = categoryService.deleteById(1L);
+
+        assertThat(result).isFalse();
+        verify(categoryRepository, never()).deleteById(any());
+        verify(cacheService, never()).invalidate(any());
+    }
+
+    @Test
+    void testDeleteByIdRepositoryFailure() {
+        when(productService.getAll(any(ProductFilter.class))).thenReturn(List.of());
+        when(categoryRepository.deleteById(1L)).thenReturn(false);
+
+        boolean result = categoryService.deleteById(1L);
+
+        assertThat(result).isFalse();
+        verify(cacheService, never()).invalidate(any());
+    }
+
+    @Test
+    void testExistsByName() {
+        when(categoryRepository.existsByNameIgnoreCase("Test Category")).thenReturn(true);
+
+        boolean result = categoryService.existsByName("Test Category");
+
+        assertThat(result).isTrue();
+        verify(categoryRepository).existsByNameIgnoreCase("Test Category");
+    }
+
+    @Test
+    void testHasProductsWithCategory() {
+        Product product = new Product();
+        when(productService.getAll(any(ProductFilter.class))).thenReturn(List.of(product));
+
+        boolean result = categoryService.deleteById(1L);
+
+        assertThat(result).isFalse();
+        verify(productService).getAll(argThat(filter ->
+                filter != null && filter.categoryId().equals(1L)
+        ));
+    }
+
+    @Test
+    void testCacheInvalidationOnSave() {
+        Category category = new Category("New Category");
+        Category savedCategory = new Category(1L, "New Category");
+
+        when(categoryRepository.existsByNameIgnoreCase("New Category")).thenReturn(false);
+        when(categoryRepository.save(category)).thenReturn(savedCategory);
+
+        categoryService.save(category);
+
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+        verify(cacheService, never()).invalidate("CATEGORY1");
+    }
+
+    @Test
+    void testCacheInvalidationOnUpdate() {
+        Category existingCategory = new Category(1L, "Old Category");
+        Category sourceCategory = new Category("Updated Category");
+        Category updatedCategory = new Category(1L, "Updated Category");
+
+        when(cacheService.get("CATEGORY1")).thenReturn(existingCategory);
+        when(categoryRepository.existsByNameIgnoreCase("Updated Category")).thenReturn(false);
+        when(categoryRepository.update(existingCategory)).thenReturn(updatedCategory);
+
+        categoryService.update(1L, sourceCategory);
+
+        verify(cacheService).invalidate("CATEGORY1");
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+
+    @Test
+    void testBusinessLogicIntegration() {
+        Category category = new Category("Test Category");
+        Category savedCategory = new Category(1L, "Test Category");
+
+        when(categoryRepository.existsByNameIgnoreCase("Test Category")).thenReturn(false);
+        when(categoryRepository.save(category)).thenReturn(savedCategory);
+
+        Category result = categoryService.save(category);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getName()).isEqualTo("Test Category");
+
+        verify(cacheService).invalidate("ALL_CATEGORIES");
+    }
+}

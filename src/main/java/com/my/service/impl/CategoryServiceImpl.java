@@ -1,0 +1,93 @@
+package com.my.service.impl;
+
+import com.my.mapper.CategoryMapper;
+import com.my.model.Category;
+import com.my.model.Product;
+import com.my.model.ProductFilter;
+import com.my.repository.CategoryRepository;
+import com.my.service.CacheService;
+import com.my.service.CategoryService;
+import com.my.service.ProductService;
+import lombok.RequiredArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@RequiredArgsConstructor
+public class CategoryServiceImpl implements CategoryService {
+
+    private final CategoryRepository categoryRepository;
+    private final CacheService cacheService;
+    private final ProductService productService;
+
+    @Override
+    public List<Category> getAll() {
+        List<Category> categories = (List<Category>) cacheService.get(CacheService.CacheKey.ALL_CATEGORIES.name());
+
+        if (categories == null) {
+            categories = categoryRepository.getAll();
+            cacheService.put(CacheService.CacheKey.ALL_CATEGORIES.name(), new ArrayList<>(categories));
+        }
+
+        return categories;
+    }
+
+    @Override
+    public Category getById(Long id) {
+        Category category = (Category) cacheService.get(CacheService.CacheKey.CATEGORY + id.toString());
+        if (category == null) {
+            category = categoryRepository.getById(id).orElse(null);
+            if (category != null) {
+                cacheService.put(CacheService.CacheKey.CATEGORY + id.toString(), category);
+            }
+        }
+        return category;
+    }
+
+    @Override
+    public Category save(Category category) {
+        if (existsByName(category.getName())) {
+            return null;
+        }
+        Category saved = categoryRepository.save(category);
+        cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
+        return saved;
+    }
+
+    @Override
+    public Category update(Long id, Category sourceCategory) {
+        Category updatedCategory = getById(id);
+        if (updatedCategory == null || existsByName(sourceCategory.getName())) {
+            return null;
+        }
+        CategoryMapper.INSTANCE.updateCategory(sourceCategory, updatedCategory);
+        Category updated = categoryRepository.update(updatedCategory);
+        cacheService.invalidate(CacheService.CacheKey.CATEGORY + id.toString());
+        cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
+        return updated;
+    }
+
+    @Override
+    public boolean deleteById(Long id) {
+        if (hasProductsWithCategory(id)) {
+            return false;
+        }
+        boolean success = categoryRepository.deleteById(id);
+        if (success) {
+            cacheService.invalidate(CacheService.CacheKey.CATEGORY + id.toString());
+            cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
+        }
+        return success;
+    }
+
+    private boolean hasProductsWithCategory(Long categoryId) {
+        ProductFilter filter = new ProductFilter(categoryId, null, null, null, null);
+        List<Product> products = productService.getAll(filter);
+        return !products.isEmpty();
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return categoryRepository.existsByNameIgnoreCase(name);
+    }
+}
