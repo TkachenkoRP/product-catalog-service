@@ -1,0 +1,11 @@
+services:
+  postgres:
+    image: postgres:17.4
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=user76584930yr
+      - POSTGRES_PASSWORD=pasSw0rD6239ej
+      - POSTGRES_DB=catalog_service_db
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql

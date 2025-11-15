@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <include file="2025/11/001-initial-schema.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/002-add-sequence.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/003-create-table-user.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/004-add-user-data.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/005-create-table-category.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/006-create-table-brand.xml" relativeToChangelogFile="true"/>
+    <include file="2025/11/007-create-table-product.xml" relativeToChangelogFile="true"/>
+
+</databaseChangeLog>

@@ -14,7 +14,6 @@ import com.my.security.UserManager;
 import com.my.service.AuditService;
 import com.my.service.BrandService;
 import com.my.service.CategoryService;
-import com.my.service.CsvDataService;
 import com.my.service.ProductService;
 import com.my.service.UserService;
 
@@ -29,7 +28,6 @@ public class ConsoleUI {
     private final ProductService productService;
     private final ProductMappingService productMappingService;
     private final AuditService auditService;
-    private final CsvDataService csvDataService;
 
     public ConsoleUI(ServiceFactory factory) {
         this.userService = factory.getUserservice();
@@ -38,7 +36,6 @@ public class ConsoleUI {
         this.productService = factory.getProductService();
         this.productMappingService = new ProductMappingService(factory.getCategoryService(), factory.getBrandService());
         this.auditService = factory.getAuditService();
-        this.csvDataService = factory.getCsvDataService();
     }
 
     public void start() {
@@ -47,7 +44,6 @@ public class ConsoleUI {
         while (true) {
             if (!UserManager.isLoggedIn()) {
                 if (!showAuthMenu()) {
-                    csvDataService.saveAllData();
                     break;
                 }
             } else {

@@ -1,18 +1,19 @@
 package com.my.app;
 
+import com.my.configuration.AppConfiguration;
+import com.my.io.ConsoleOutputHandler;
 import com.my.repository.BrandRepository;
 import com.my.repository.CategoryRepository;
 import com.my.repository.ProductRepository;
 import com.my.repository.UserRepository;
-import com.my.repository.impl.InMemoryBrandRepositoryImpl;
-import com.my.repository.impl.InMemoryCategoryRepositoryImpl;
-import com.my.repository.impl.InMemoryProductRepositoryImpl;
-import com.my.repository.impl.InMemoryUserRepositoryImpl;
+import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
+import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
+import com.my.repository.impl.PostgresqlProductRepositoryImpl;
+import com.my.repository.impl.PostgresqlUserRepositoryImpl;
 import com.my.service.AuditService;
 import com.my.service.BrandService;
 import com.my.service.CacheService;
 import com.my.service.CategoryService;
-import com.my.service.CsvDataService;
 import com.my.service.ProductService;
 import com.my.service.UserService;
 import com.my.service.impl.AuditServiceImpl;
@@ -20,40 +21,55 @@ import com.my.service.impl.BrandServiceImpl;
 import com.my.service.impl.CategoryServiceImpl;
 import com.my.service.impl.ProductServiceImpl;
 import com.my.service.impl.UserServiceImpl;
+import com.my.util.DBUtil;
+import liquibase.Liquibase;
+import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
+import liquibase.exception.LiquibaseException;
+import liquibase.resource.ClassLoaderResourceAccessor;
 
-public class InMemoryServiceFactory implements ServiceFactory, ServiceCreator {
+import java.sql.Connection;
+import java.sql.SQLException;
+
+public class PostgresqlServiceFactory implements ServiceFactory, ServiceCreator {
+
+    private final AuditService auditService;
+    private final CacheService cacheService;
 
     private final UserService userService;
     private final CategoryService categoryService;
     private final BrandService brandService;
     private final ProductService productService;
-    private final AuditService auditService;
-    private final CacheService cacheService;
-    private final CsvDataService csvDataService;
 
-    public InMemoryServiceFactory() {
-        UserRepository userRepository = new InMemoryUserRepositoryImpl();
-        CategoryRepository categoryRepository = new InMemoryCategoryRepositoryImpl();
-        BrandRepository brandRepository = new InMemoryBrandRepositoryImpl();
-        ProductRepository productRepository = new InMemoryProductRepositoryImpl();
-
+    public PostgresqlServiceFactory() {
         this.cacheService = createCacheService();
         this.auditService = createAuditService();
-        this.userService = createUserService(userRepository);
+
+        UserRepository userRepository = new PostgresqlUserRepositoryImpl();
+        CategoryRepository categoryRepository = new PostgresqlCategoryRepositoryImpl();
+        BrandRepository brandRepository = new PostgresqlBrandRepositoryImpl();
+        ProductRepository productRepository = new PostgresqlProductRepositoryImpl();
+
         this.productService = createProductService(productRepository);
+        this.userService = createUserService(userRepository);
         this.categoryService = createCategoryService(categoryRepository);
         this.brandService = createBrandService(brandRepository);
-        this.csvDataService = new CsvDataService(userRepository, categoryRepository, brandRepository, productRepository);
 
-        loadData();
+        initPostgresql();
     }
 
-    private void loadData() {
-        if (csvDataService.hasSavedData()) {
-            System.out.println("Обнаружены сохраненные данные...");
-            csvDataService.loadAllData();
-        } else {
-            System.out.println("Файлы данных не найдены, используются начальные данные");
+    private void initPostgresql() {
+        try {
+            Connection connection = DBUtil.getConnection(AppConfiguration.getProperty("liquibase.liquibase-schema"));
+            Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+            Liquibase liquibase = new Liquibase(AppConfiguration.getProperty("liquibase.change-log"), new ClassLoaderResourceAccessor(), database);
+            liquibase.update(AppConfiguration.getProperty("liquibase.contexts"));
+        } catch (LiquibaseException e) {
+            ConsoleOutputHandler.displayMsg("Ошибка инициализации БД!");
+            System.err.println(e.getMessage());
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to create connection database: " + e.getMessage());
         }
     }
 
@@ -63,18 +79,16 @@ public class InMemoryServiceFactory implements ServiceFactory, ServiceCreator {
     }
 
     @Override
-    public UserService getUserservice() {
-        return userService;
-    }
-
     public CategoryService createCategoryService(CategoryRepository categoryRepository) {
         return new CategoryServiceImpl(categoryRepository, cacheService, productService);
     }
 
+    @Override
     public BrandService createBrandService(BrandRepository brandRepository) {
         return new BrandServiceImpl(brandRepository, cacheService, productService);
     }
 
+    @Override
     public ProductService createProductService(ProductRepository productRepository) {
         return new ProductServiceImpl(productRepository, auditService, cacheService);
     }
@@ -87,6 +101,11 @@ public class InMemoryServiceFactory implements ServiceFactory, ServiceCreator {
     @Override
     public CacheService createCacheService() {
         return new CacheService();
+    }
+
+    @Override
+    public UserService getUserservice() {
+        return userService;
     }
 
     @Override
