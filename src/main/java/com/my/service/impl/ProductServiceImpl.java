@@ -29,12 +29,7 @@ public class ProductServiceImpl implements ProductService {
 
         long startTime = System.nanoTime();
 
-        List<Product> products = (List<Product>) cacheService.get(CacheService.CacheKey.ALL_PRODUCTS.name());
-
-        if (products == null) {
-            products = productRepository.getAll();
-            cacheService.put(CacheService.CacheKey.ALL_PRODUCTS.name(), new ArrayList<>(products));
-        }
+        List<Product> products = getCachedProducts();
 
         if (filter == null) {
             auditService.logAction(AuditLog.AuditActions.VIEW_ALL_PRODUCTS, "Просмотр всех товаров");
@@ -44,26 +39,55 @@ public class ProductServiceImpl implements ProductService {
 
         auditService.logAction(AuditLog.AuditActions.VIEW_ALL_PRODUCTS, "Просмотр всех товаров c фильтром: " + filter);
 
-        products = products.stream()
-                .filter(p -> filter.categoryId() == null || p.getCategoryId().equals(filter.categoryId()))
-                .filter(p -> filter.brandId() == null || p.getBrandId().equals(filter.brandId()))
-                .filter(p -> filter.minStock() == null || p.getStock() >= filter.minStock())
-                .filter(p -> {
-                    if (filter.minPrice() == null && filter.maxPrice() == null) {
-                        return true;
-                    }
-                    if (filter.minPrice() == null) {
-                        return p.getPrice() <= filter.maxPrice();
-                    }
-                    if (filter.maxPrice() == null) {
-                        return p.getPrice() >= filter.minPrice();
-                    }
-                    return p.getPrice() >= filter.minPrice() && p.getPrice() <= filter.maxPrice();
-                })
-                .toList();
+        List<Product> filteredProducts = applyFilters(products, filter);
 
         recordMetric("getAllProductsWithFilter", System.nanoTime() - startTime);
+        return filteredProducts;
+    }
+
+    private List<Product> getCachedProducts() {
+        List<Product> products = (List<Product>) cacheService.get(CacheService.CacheKey.ALL_PRODUCTS.name());
+
+        if (products == null) {
+            products = productRepository.getAll();
+            cacheService.put(CacheService.CacheKey.ALL_PRODUCTS.name(), new ArrayList<>(products));
+        }
+
         return products;
+    }
+
+    private List<Product> applyFilters(List<Product> products, ProductFilter filter) {
+        return products.stream()
+                .filter(product -> filterByCategory(product, filter.categoryId()))
+                .filter(product -> filterByBrand(product, filter.brandId()))
+                .filter(product -> filterByStock(product, filter.minStock()))
+                .filter(product -> filterByPrice(product, filter.minPrice(), filter.maxPrice()))
+                .toList();
+    }
+
+    private boolean filterByCategory(Product product, Long categoryId) {
+        return categoryId == null || product.getCategoryId().equals(categoryId);
+    }
+
+    private boolean filterByBrand(Product product, Long brandId) {
+        return brandId == null || product.getBrandId().equals(brandId);
+    }
+
+    private boolean filterByStock(Product product, Integer minStock) {
+        return minStock == null || product.getStock() >= minStock;
+    }
+
+    private boolean filterByPrice(Product product, Double minPrice, Double maxPrice) {
+        if (minPrice == null && maxPrice == null) {
+            return true;
+        }
+        if (minPrice == null) {
+            return product.getPrice() <= maxPrice;
+        }
+        if (maxPrice == null) {
+            return product.getPrice() >= minPrice;
+        }
+        return product.getPrice() >= minPrice && product.getPrice() <= maxPrice;
     }
 
     @Override
