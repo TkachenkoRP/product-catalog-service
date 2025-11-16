@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="add-test-data" author="Rodion Tkachenko" context="test">
+        <insert schemaName="catalog_schema" tableName="user">
+            <column name="id" valueComputed="nextval('catalog_schema.user_seq')"/>
+            <column name="email" value="testadmin@test.ru"/>
+            <column name="password" value="admin123"/>
+            <column name="username" value="Test Administrator"/>
+            <column name="role" value="ROLE_ADMIN"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="user">
+            <column name="id" valueComputed="nextval('catalog_schema.user_seq')"/>
+            <column name="email" value="testuser@test.ru"/>
+            <column name="password" value="user123"/>
+            <column name="username" value="Test User"/>
+            <column name="role" value="ROLE_USER"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="category">
+            <column name="id" valueComputed="nextval('catalog_schema.category_seq')"/>
+            <column name="name" value="Electronics"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="category">
+            <column name="id" valueComputed="nextval('catalog_schema.category_seq')"/>
+            <column name="name" value="Clothing"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="category">
+            <column name="id" valueComputed="nextval('catalog_schema.category_seq')"/>
+            <column name="name" value="Books"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="brand">
+            <column name="id" valueComputed="nextval('catalog_schema.brand_seq')"/>
+            <column name="name" value="Samsung"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="brand">
+            <column name="id" valueComputed="nextval('catalog_schema.brand_seq')"/>
+            <column name="name" value="Nike"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="brand">
+            <column name="id" valueComputed="nextval('catalog_schema.brand_seq')"/>
+            <column name="name" value="Apple"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Galaxy Phone"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="699.99"/>
+            <column name="stock" value="50"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Smart TV"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="1299.99"/>
+            <column name="stock" value="25"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike Smartwatch"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="299.99"/>
+            <column name="stock" value="40"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike Fitness Tracker"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="149.99"/>
+            <column name="stock" value="60"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="iPhone 15"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="999.99"/>
+            <column name="stock" value="30"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="MacBook Pro"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Electronics')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="2399.99"/>
+            <column name="stock" value="15"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Branded T-Shirt"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="29.99"/>
+            <column name="stock" value="100"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Logo Hoodie"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="59.99"/>
+            <column name="stock" value="75"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike Running Shoes"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="129.99"/>
+            <column name="stock" value="100"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike Sport T-Shirt"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="34.99"/>
+            <column name="stock" value="200"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Apple Logo T-Shirt"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="39.99"/>
+            <column name="stock" value="80"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Apple Branded Cap"/>
+            <column name="category_id"
+                    valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Clothing')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="24.99"/>
+            <column name="stock" value="120"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Electronics Guide"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="19.99"/>
+            <column name="stock" value="40"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Samsung Innovation Story"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Samsung')"/>
+            <column name="price" value="24.99"/>
+            <column name="stock" value="35"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike: Just Do It Story"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="29.99"/>
+            <column name="stock" value="45"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Nike Training Guide"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Nike')"/>
+            <column name="price" value="17.99"/>
+            <column name="stock" value="55"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Apple Design Book"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="49.99"/>
+            <column name="stock" value="40"/>
+        </insert>
+
+        <insert schemaName="catalog_schema" tableName="product">
+            <column name="id" valueComputed="nextval('catalog_schema.product_seq')"/>
+            <column name="name" value="Steve Jobs Biography"/>
+            <column name="category_id" valueComputed="(SELECT id FROM catalog_schema.category WHERE name = 'Books')"/>
+            <column name="brand_id" valueComputed="(SELECT id FROM catalog_schema.brand WHERE name = 'Apple')"/>
+            <column name="price" value="24.99"/>
+            <column name="stock" value="75"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

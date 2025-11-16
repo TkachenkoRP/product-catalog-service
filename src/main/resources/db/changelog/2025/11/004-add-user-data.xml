@@ -5,7 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <changeSet id="add-user-data" author="Rodion Tkachenko">
+    <changeSet id="add-user-data" author="Rodion Tkachenko" context="dev">
         <insert schemaName="catalog_schema" tableName="user">
             <column name="id" valueComputed="nextval('catalog_schema.user_seq')"/>
             <column name="email" value="admin@my.ru"/>

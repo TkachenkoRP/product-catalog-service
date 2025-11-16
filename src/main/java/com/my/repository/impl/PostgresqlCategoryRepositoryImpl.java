@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.model.Category;
 import com.my.repository.CategoryRepository;
+import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,7 +14,14 @@ import java.util.Optional;
 
 public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository implements CategoryRepository {
 
-    public PostgresqlCategoryRepositoryImpl() {
+    private final Connection connection;
+
+    public PostgresqlCategoryRepositoryImpl() throws SQLException {
+        this(DBUtil.getConnection());
+    }
+
+    public PostgresqlCategoryRepositoryImpl(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
@@ -21,8 +29,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
         List<Category> categories = new ArrayList<>();
         String sql = String.format("SELECT id, name FROM %s.category ORDER BY id", schema);
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -38,7 +45,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     public Optional<Category> getById(Long id) {
         String sql = String.format("SELECT id, name FROM %s.category WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -63,7 +70,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     private Category insert(Category category) {
         String sql = String.format("INSERT INTO %s.category (id, name) VALUES (?, ?)", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             Long id = getNextSequenceValue(Sequences.CATEGORY.getSequenceName());
             stmt.setLong(1, id);
             stmt.setString(2, category.getName());
@@ -78,7 +85,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     @Override
     public Category update(Category category) {
         String sql = String.format("UPDATE %s.category SET name = ? WHERE id = ?", schema);
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, category.getName());
             stmt.setLong(2, category.getId());
             int affectedRows = stmt.executeUpdate();
@@ -96,7 +103,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     public boolean deleteById(Long id) {
         String sql = String.format("DELETE FROM %s.category WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -108,7 +115,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     public boolean existsByNameIgnoreCase(String categoryName) {
         String sql = String.format("SELECT COUNT(*) FROM %s.category WHERE LOWER(name) = LOWER(?)", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, categoryName);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {

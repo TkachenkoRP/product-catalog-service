@@ -42,7 +42,7 @@ public class PostgresqlServiceFactory implements ServiceFactory, ServiceCreator 
     private final BrandService brandService;
     private final ProductService productService;
 
-    public PostgresqlServiceFactory() {
+    public PostgresqlServiceFactory() throws SQLException {
         this.cacheService = createCacheService();
         this.auditService = createAuditService();
 
