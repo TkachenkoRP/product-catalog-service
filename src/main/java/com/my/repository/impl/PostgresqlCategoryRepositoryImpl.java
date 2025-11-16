@@ -14,14 +14,12 @@ import java.util.Optional;
 
 public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository implements CategoryRepository {
 
-    private final Connection connection;
-
     public PostgresqlCategoryRepositoryImpl() throws SQLException {
-        this(DBUtil.getConnection());
+        super(DBUtil.getConnection());
     }
 
     public PostgresqlCategoryRepositoryImpl(Connection connection) {
-        this.connection = connection;
+        super(connection);
     }
 
     @Override

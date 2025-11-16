@@ -15,14 +15,12 @@ import java.util.Optional;
 
 public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository implements UserRepository {
 
-    private final Connection connection;
-
     public PostgresqlUserRepositoryImpl() throws SQLException {
-        this(DBUtil.getConnection());
+        super(DBUtil.getConnection());
     }
 
     public PostgresqlUserRepositoryImpl(Connection connection) {
-        this.connection = connection;
+        super(connection);
     }
 
     @Override

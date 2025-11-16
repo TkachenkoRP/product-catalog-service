@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.model.Product;
 import com.my.repository.ProductRepository;
+import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,8 +14,12 @@ import java.util.Optional;
 
 public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository implements ProductRepository {
 
+    public PostgresqlProductRepositoryImpl() throws SQLException {
+        super(DBUtil.getConnection());
+    }
 
-    public PostgresqlProductRepositoryImpl() {
+    public PostgresqlProductRepositoryImpl(Connection connection) {
+        super(connection);
     }
 
     @Override
@@ -22,8 +27,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
         List<Product> products = new ArrayList<>();
         String sql = String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product ORDER BY id", schema);
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 products.add(mapResultSetToProduct(rs));
@@ -38,7 +42,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     public Optional<Product> getById(Long id) {
         String sql = String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -63,7 +67,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     private Product insert(Product product) {
         String sql = String.format("INSERT INTO %s.product (id, name, category_id, brand_id, price, stock) VALUES (?, ?, ?, ?, ?, ?)", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             Long id = getNextSequenceValue(Sequences.PRODUCT.getSequenceName());
             stmt.setLong(1, id);
             stmt.setString(2, product.getName());
@@ -83,7 +87,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     public Product update(Product product) {
         String sql = String.format("UPDATE %s.product SET name = ?, category_id = ?, brand_id = ?, price = ?, stock = ? WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, product.getName());
             stmt.setLong(2, product.getCategoryId());
             stmt.setLong(3, product.getBrandId());
@@ -105,7 +109,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     public boolean deleteById(Long id) {
         String sql = String.format("DELETE FROM %s.product WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

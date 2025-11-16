@@ -14,14 +14,12 @@ import java.util.Optional;
 
 public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository implements BrandRepository {
 
-    private final Connection connection;
-
     public PostgresqlBrandRepositoryImpl() throws SQLException {
-        this(DBUtil.getConnection());
+        super(DBUtil.getConnection());
     }
 
     public PostgresqlBrandRepositoryImpl(Connection connection) {
-        this.connection = connection;
+        super(connection);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.my.repository;
 import com.my.configuration.AppConfiguration;
 import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
 import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
+import com.my.repository.impl.PostgresqlProductRepositoryImpl;
 import com.my.repository.impl.PostgresqlUserRepositoryImpl;
 import com.my.util.DBUtil;
 import liquibase.Contexts;
@@ -26,7 +27,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 @Testcontainers
-public class AbstractPostgresqlRepositoryTest {
+public abstract class AbstractPostgresqlRepositoryTest {
 
     @Container
     protected static final PostgreSQLContainer<?> postgresContainer =
@@ -39,6 +40,7 @@ public class AbstractPostgresqlRepositoryTest {
     protected static UserRepository userRepository;
     protected static CategoryRepository categoryRepository;
     protected static BrandRepository brandRepository;
+    protected static ProductRepository productRepository;
 
     @BeforeAll
     static void setUp() throws SQLException, LiquibaseException {
@@ -61,7 +63,7 @@ public class AbstractPostgresqlRepositoryTest {
         userRepository = new PostgresqlUserRepositoryImpl(testConnection);
         categoryRepository = new PostgresqlCategoryRepositoryImpl(testConnection);
         brandRepository = new PostgresqlBrandRepositoryImpl(testConnection);
-
+        productRepository = new PostgresqlProductRepositoryImpl(testConnection);
     }
 
     @BeforeEach
@@ -73,6 +75,7 @@ public class AbstractPostgresqlRepositoryTest {
     void tearDownTransaction() throws SQLException {
         testConnection.rollback();
     }
+
     @AfterAll
     static void tearDown() throws SQLException {
         testConnection.close();

@@ -10,19 +10,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public abstract class PostgresqlBaseRepository {
+
+    protected final Connection connection;
     protected final String schema;
 
-    protected PostgresqlBaseRepository() {
-        schema = AppConfiguration.getProperty("database.schema");
+    protected PostgresqlBaseRepository() throws SQLException {
+        this(DBUtil.getConnection());
     }
 
-    protected Connection getConnection() throws SQLException {
-        return DBUtil.getConnection();
+    protected PostgresqlBaseRepository(Connection connection) {
+        this.connection = connection;
+        schema = AppConfiguration.getProperty("database.schema");
     }
 
     protected Long getNextSequenceValue(String sequenceName) throws SQLException {
         String sql = String.format("SELECT nextval('%s.%s')", schema, sequenceName);
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             if (rs.next()) {
                 return rs.getLong(1);
             }
