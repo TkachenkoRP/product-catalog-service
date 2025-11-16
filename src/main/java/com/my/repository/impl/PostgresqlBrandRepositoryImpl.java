@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.model.Brand;
 import com.my.repository.BrandRepository;
+import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,7 +14,14 @@ import java.util.Optional;
 
 public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository implements BrandRepository {
 
-    public PostgresqlBrandRepositoryImpl() {
+    private final Connection connection;
+
+    public PostgresqlBrandRepositoryImpl() throws SQLException {
+        this(DBUtil.getConnection());
+    }
+
+    public PostgresqlBrandRepositoryImpl(Connection connection) {
+        this.connection = connection;
     }
 
     @Override
@@ -21,8 +29,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
         List<Brand> brands = new ArrayList<>();
         String sql = String.format("SELECT id, name FROM %s.brand ORDER BY id", schema);
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
+        try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
@@ -38,7 +45,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     public Optional<Brand> getById(Long id) {
         String sql = String.format("SELECT id, name FROM %s.brand WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -63,7 +70,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     private Brand insert(Brand brand) {
         String sql = String.format("INSERT INTO %s.brand (id, name) VALUES (?, ?)", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             Long id = getNextSequenceValue(Sequences.BRAND.getSequenceName());
             stmt.setLong(1, id);
             stmt.setString(2, brand.getName());
@@ -81,7 +88,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     public Brand update(Brand brand) {
         String sql = String.format("UPDATE %s.brand SET name = ? WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, brand.getName());
             stmt.setLong(2, brand.getId());
             int affectedRows = stmt.executeUpdate();
@@ -99,7 +106,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     public boolean deleteById(Long id) {
         String sql = String.format("DELETE FROM %s.brand WHERE id = ?", schema);
 
-        try (Connection conn = getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -111,8 +118,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     public boolean existsByNameIgnoreCase(String brandName) {
         String sql = String.format("SELECT COUNT(*) FROM %s.brand WHERE LOWER(name) = LOWER(?)", schema);
 
-        try (Connection conn = getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
 
             stmt.setString(1, brandName);
             try (ResultSet rs = stmt.executeQuery()) {

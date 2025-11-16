@@ -1,6 +1,7 @@
 package com.my.repository;
 
 import com.my.configuration.AppConfiguration;
+import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
 import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
 import com.my.repository.impl.PostgresqlUserRepositoryImpl;
 import com.my.util.DBUtil;
@@ -37,6 +38,7 @@ public class AbstractPostgresqlRepositoryTest {
 
     protected static UserRepository userRepository;
     protected static CategoryRepository categoryRepository;
+    protected static BrandRepository brandRepository;
 
     @BeforeAll
     static void setUp() throws SQLException, LiquibaseException {
@@ -58,6 +60,8 @@ public class AbstractPostgresqlRepositoryTest {
 
         userRepository = new PostgresqlUserRepositoryImpl(testConnection);
         categoryRepository = new PostgresqlCategoryRepositoryImpl(testConnection);
+        brandRepository = new PostgresqlBrandRepositoryImpl(testConnection);
+
     }
 
     @BeforeEach
