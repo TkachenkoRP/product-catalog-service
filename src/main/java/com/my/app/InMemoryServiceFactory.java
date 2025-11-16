@@ -21,6 +21,9 @@ import com.my.service.impl.CategoryServiceImpl;
 import com.my.service.impl.ProductServiceImpl;
 import com.my.service.impl.UserServiceImpl;
 
+/**
+ * Конструктор фабрики in-memory сервисов.
+ */
 public class InMemoryServiceFactory implements ServiceFactory, ServiceCreator {
 
     private final UserService userService;

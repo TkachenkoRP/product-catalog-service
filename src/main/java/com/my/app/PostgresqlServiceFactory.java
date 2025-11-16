@@ -32,6 +32,9 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * Фабрика сервисов для работы с PostgreSQL базой данных.
+ */
 public class PostgresqlServiceFactory implements ServiceFactory, ServiceCreator {
 
     private final AuditService auditService;

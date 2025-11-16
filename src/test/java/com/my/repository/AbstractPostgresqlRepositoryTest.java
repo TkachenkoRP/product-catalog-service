@@ -35,7 +35,8 @@ public abstract class AbstractPostgresqlRepositoryTest {
                     .waitingFor(Wait.forListeningPort());
 
     protected static Connection testConnection;
-    protected static String testSchema = AppConfiguration.getProperty("database.schema");
+
+    protected static final String TEST_SCHEMA = AppConfiguration.getProperty("database.schema");
 
     protected static UserRepository userRepository;
     protected static CategoryRepository categoryRepository;
@@ -48,10 +49,10 @@ public abstract class AbstractPostgresqlRepositoryTest {
         String username = postgresContainer.getUsername();
         String password = postgresContainer.getPassword();
 
-        testConnection = DBUtil.getConnection(jdbcUrl, username, password, testSchema);
+        testConnection = DBUtil.getConnection(jdbcUrl, username, password, TEST_SCHEMA);
 
         try (Statement statement = testConnection.createStatement()) {
-            statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS %s;".formatted(testSchema));
+            statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS %s;".formatted(TEST_SCHEMA));
         }
 
         Contexts contexts = new Contexts("test");
