@@ -3,7 +3,6 @@ package com.my.repository.impl;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
-import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,8 +14,8 @@ import java.util.Optional;
 
 public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository implements UserRepository {
 
-    public PostgresqlUserRepositoryImpl() throws SQLException {
-        super(DBUtil.getConnection());
+    public PostgresqlUserRepositoryImpl() {
+        super();
     }
 
     public PostgresqlUserRepositoryImpl(Connection connection) {
@@ -27,6 +26,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
     public List<User> getAll() {
         List<User> users = new ArrayList<>();
         String sql = String.format("SELECT id, email, username, password, role FROM %s.user", schema);
+
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {

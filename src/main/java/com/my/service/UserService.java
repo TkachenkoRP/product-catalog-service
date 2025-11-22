@@ -30,6 +30,12 @@ public interface UserService {
     User login(String email, String password);
 
     /**
+     *
+     * Выполняет выход пользователя.
+     */
+    void logout();
+
+    /**
      * Получает список всех пользователей.
      *
      * @return список всех пользователей в системе

@@ -19,4 +19,8 @@ public class UserManager {
     public static void logout() {
         loggedInUser = null;
     }
+
+    public static Long getCurrentUserId() {
+        return isLoggedIn() ? UserManager.getLoggedInUser().getId() : 0L;
+    }
 }
