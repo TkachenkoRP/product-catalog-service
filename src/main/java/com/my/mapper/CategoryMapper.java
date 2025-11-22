@@ -1,5 +1,7 @@
 package com.my.mapper;
 
+import com.my.dto.CategoryRequestDto;
+import com.my.dto.CategoryResponseDto;
 import com.my.model.Category;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -7,6 +9,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.factory.Mappers;
+
+import java.util.List;
 
 @Mapper
 public interface CategoryMapper {
@@ -17,4 +21,10 @@ public interface CategoryMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     void updateCategory(Category sourceCategory, @MappingTarget Category targetCategory);
+
+    Category toEntity(CategoryRequestDto request);
+
+    CategoryResponseDto toDto(Category entity);
+
+    List<CategoryResponseDto> toDto(List<Category> entities);
 }

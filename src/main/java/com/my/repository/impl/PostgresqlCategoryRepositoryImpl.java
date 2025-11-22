@@ -2,7 +2,6 @@ package com.my.repository.impl;
 
 import com.my.model.Category;
 import com.my.repository.CategoryRepository;
-import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,8 +13,8 @@ import java.util.Optional;
 
 public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository implements CategoryRepository {
 
-    public PostgresqlCategoryRepositoryImpl() throws SQLException {
-        super(DBUtil.getConnection());
+    public PostgresqlCategoryRepositoryImpl() {
+        super();
     }
 
     public PostgresqlCategoryRepositoryImpl(Connection connection) {
@@ -88,7 +87,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
             stmt.setLong(2, category.getId());
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка поиска категории с ID: " + category.getId());
+                throw new RuntimeException("Ошибка обновления категории с ID: " + category.getId());
             }
             return category;
 

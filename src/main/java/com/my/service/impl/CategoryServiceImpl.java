@@ -1,15 +1,19 @@
 package com.my.service.impl;
 
+import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.CategoryRepository;
+import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
 import com.my.service.CacheService;
 import com.my.service.CategoryService;
 import com.my.service.ProductService;
 import lombok.RequiredArgsConstructor;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +23,16 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final CacheService cacheService;
     private final ProductService productService;
+
+    public CategoryServiceImpl() {
+        this(new PostgresqlCategoryRepositoryImpl(), new ProductServiceImpl());
+    }
+
+    public CategoryServiceImpl(CategoryRepository categoryRepository, ProductService productService) {
+        this.categoryRepository = categoryRepository;
+        this.productService = productService;
+        this.cacheService = new CacheService();
+    }
 
     @Override
     public List<Category> getAll() {
@@ -36,7 +50,8 @@ public class CategoryServiceImpl implements CategoryService {
     public Category getById(Long id) {
         Category category = (Category) cacheService.get(CacheService.CacheKey.CATEGORY + id.toString());
         if (category == null) {
-            category = categoryRepository.getById(id).orElse(null);
+            category = categoryRepository.getById(id).orElseThrow(
+                    () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
             if (category != null) {
                 cacheService.put(CacheService.CacheKey.CATEGORY + id.toString(), category);
             }
@@ -47,7 +62,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category save(Category category) {
         if (existsByName(category.getName())) {
-            return null;
+            throw new AlreadyExistException(category.getName() + " уже существует");
         }
         Category saved = categoryRepository.save(category);
         cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
@@ -57,8 +72,8 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public Category update(Long id, Category sourceCategory) {
         Category updatedCategory = getById(id);
-        if (updatedCategory == null || existsByName(sourceCategory.getName())) {
-            return null;
+        if (existsByName(sourceCategory.getName())) {
+            throw new AlreadyExistException(sourceCategory.getName() + " уже существует");
         }
         CategoryMapper.INSTANCE.updateCategory(sourceCategory, updatedCategory);
         Category updated = categoryRepository.update(updatedCategory);

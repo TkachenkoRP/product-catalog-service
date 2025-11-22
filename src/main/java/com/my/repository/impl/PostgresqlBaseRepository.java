@@ -14,7 +14,7 @@ public abstract class PostgresqlBaseRepository {
     protected final Connection connection;
     protected final String schema;
 
-    protected PostgresqlBaseRepository() throws SQLException {
+    protected PostgresqlBaseRepository() {
         this(DBUtil.getConnection());
     }
 
