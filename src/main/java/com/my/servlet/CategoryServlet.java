@@ -51,8 +51,8 @@ public class CategoryServlet extends BaseServlet {
 
     private void getAllCategories(HttpServletResponse resp) throws IOException {
         List<Category> categories = categoryService.getAll();
-        List<CategoryResponseDto> requestDtos = categoryMapper.toDto(categories);
-        sendJson(resp, ApiResponse.success(requestDtos));
+        List<CategoryResponseDto> responseDtoList = categoryMapper.toDto(categories);
+        sendJson(resp, ApiResponse.success(responseDtoList));
     }
 
     private void getCategoryById(HttpServletResponse resp, Long id) throws IOException {
@@ -103,7 +103,7 @@ public class CategoryServlet extends BaseServlet {
         } catch (EntityNotFoundException | AlreadyExistException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
-            sendError(resp, "Error updating category: " + e.getMessage(),
+            sendError(resp, "Ошибка обновления категории: " + e.getMessage(),
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
@@ -118,13 +118,13 @@ public class CategoryServlet extends BaseServlet {
             }
             boolean deleted = categoryService.deleteById(id.get());
             if (deleted) {
-                sendJson(resp, ApiResponse.success("Category deleted successfully"));
+                sendJson(resp, ApiResponse.success("Категория удалена"));
             } else {
-                sendError(resp, "Error deleting category",
+                sendError(resp, "Ошибка удаления категории",
                         HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
-            sendError(resp, "Error deleting category: " + e.getMessage(),
+            sendError(resp, "Ошибка удаления категории: " + e.getMessage(),
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }

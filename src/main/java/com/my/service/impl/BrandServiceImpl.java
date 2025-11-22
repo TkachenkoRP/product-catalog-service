@@ -1,15 +1,19 @@
 package com.my.service.impl;
 
+import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.BrandRepository;
+import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
 import com.my.service.BrandService;
 import com.my.service.CacheService;
 import com.my.service.ProductService;
 import lombok.RequiredArgsConstructor;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +23,16 @@ public class BrandServiceImpl implements BrandService {
     private final BrandRepository brandRepository;
     private final CacheService cacheService;
     private final ProductService productService;
+
+    public BrandServiceImpl() {
+        this(new PostgresqlBrandRepositoryImpl(), new ProductServiceImpl());
+    }
+
+    public BrandServiceImpl(BrandRepository brandRepository, ProductService productService) {
+        this.brandRepository = brandRepository;
+        this.productService = productService;
+        this.cacheService = new CacheService();
+    }
 
     @Override
     public List<Brand> getAll() {
@@ -36,7 +50,8 @@ public class BrandServiceImpl implements BrandService {
     public Brand getById(Long id) {
         Brand brand = (Brand) cacheService.get(CacheService.CacheKey.BRAND + id.toString());
         if (brand == null) {
-            brand = brandRepository.getById(id).orElse(null);
+            brand = brandRepository.getById(id).orElseThrow(
+                    () -> new EntityNotFoundException(MessageFormat.format("Бренд с id {0} не найден", id)));
             if (brand != null) {
                 cacheService.put(CacheService.CacheKey.BRAND + id.toString(), brand);
             }
@@ -47,7 +62,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public Brand save(Brand brand) {
         if (existsByName(brand.getName())) {
-            return null;
+            throw new AlreadyExistException(brand.getName() + " уже существует");
         }
         Brand saved = brandRepository.save(brand);
         cacheService.invalidate(CacheService.CacheKey.ALL_BRANDS.name());
@@ -57,8 +72,8 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public Brand update(Long id, Brand sourceBrand) {
         Brand updatedBrand = getById(id);
-        if (updatedBrand == null || existsByName(sourceBrand.getName())) {
-            return null;
+        if (existsByName(sourceBrand.getName())) {
+            throw new AlreadyExistException(sourceBrand.getName() + " уже существует");
         }
         BrandMapper.INSTANCE.updateBrand(sourceBrand, updatedBrand);
         Brand updated = brandRepository.update(updatedBrand);

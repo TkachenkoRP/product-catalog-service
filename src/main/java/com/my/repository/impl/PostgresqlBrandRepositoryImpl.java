@@ -2,7 +2,6 @@ package com.my.repository.impl;
 
 import com.my.model.Brand;
 import com.my.repository.BrandRepository;
-import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,8 +13,8 @@ import java.util.Optional;
 
 public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository implements BrandRepository {
 
-    public PostgresqlBrandRepositoryImpl() throws SQLException {
-        super(DBUtil.getConnection());
+    public PostgresqlBrandRepositoryImpl() {
+        super();
     }
 
     public PostgresqlBrandRepositoryImpl(Connection connection) {
@@ -91,7 +90,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
             stmt.setLong(2, brand.getId());
             int affectedRows = stmt.executeUpdate();
             if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка поиска бренда с ID: " + brand.getId());
+                throw new RuntimeException("Ошибка обновления бренда с ID: " + brand.getId());
             }
             return brand;
 
