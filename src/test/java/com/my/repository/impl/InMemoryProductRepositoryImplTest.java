@@ -20,7 +20,7 @@ class InMemoryProductRepositoryImplTest {
 
     @Test
     void testGetAllInitiallyEmpty() {
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
 
         assertThat(products).isNotNull().isEmpty();
     }
@@ -39,7 +39,7 @@ class InMemoryProductRepositoryImplTest {
         assertThat(savedProduct.getPrice()).isEqualTo(99.99);
         assertThat(savedProduct.getStock()).isEqualTo(10);
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).hasSize(1);
     }
 
@@ -108,7 +108,7 @@ class InMemoryProductRepositoryImplTest {
         Optional<Product> foundProduct = repository.getById(1L);
         assertThat(foundProduct).isEmpty();
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).isEmpty();
     }
 
@@ -128,7 +128,7 @@ class InMemoryProductRepositoryImplTest {
 
         repository.loadData(productsToLoad);
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).hasSize(2);
 
         Optional<Product> product1 = repository.getById(10L);
@@ -144,7 +144,7 @@ class InMemoryProductRepositoryImplTest {
     void testLoadDataEmptyList() {
         repository.loadData(List.of());
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).isEmpty();
     }
 
@@ -152,7 +152,7 @@ class InMemoryProductRepositoryImplTest {
     void testLoadDataNull() {
         repository.loadData(null);
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).isEmpty();
     }
 
@@ -170,7 +170,7 @@ class InMemoryProductRepositoryImplTest {
         assertThat(product2.getId()).isEqualTo(2L);
         assertThat(product3.getId()).isEqualTo(3L);
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).hasSize(3);
     }
 
@@ -179,7 +179,7 @@ class InMemoryProductRepositoryImplTest {
         Product product = new Product("Test Product", 1L, 1L, 99.99, 10);
         repository.save(product);
 
-        List<Product> products = repository.getAll();
+        List<Product> products = repository.getAll(null);
         assertThat(products).hasSize(1);
 
         assertThatNoException().isThrownBy(() -> {

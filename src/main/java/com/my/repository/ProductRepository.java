@@ -1,6 +1,7 @@
 package com.my.repository;
 
 import com.my.model.Product;
+import com.my.model.ProductFilter;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +15,7 @@ public interface ProductRepository {
      *
      * @return список всех товаров
      */
-    List<Product> getAll();
+    List<Product> getAll(ProductFilter filter);
 
     /**
      * Находит товар по идентификатору.

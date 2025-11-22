@@ -124,7 +124,7 @@ public class CsvDataService {
     }
 
     private void saveProducts() throws IOException {
-        List<Product> products = productRepository.getAll();
+        List<Product> products = productRepository.getAll(null);
         try (PrintWriter writer = new PrintWriter(new FileWriter(DATA_DIR + File.separator + PRODUCTS_CSV))) {
             writer.println("id;name;category_id;brand_id;price;stock");
             for (Product product : products) {

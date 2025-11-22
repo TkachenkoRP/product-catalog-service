@@ -44,4 +44,40 @@ public abstract class BaseServlet extends HttpServlet {
             return Optional.empty();
         }
     }
+
+    protected Long getLongParameter(HttpServletRequest req, String paramName) {
+        String paramValue = req.getParameter(paramName);
+        if (paramValue == null) {
+            return null;
+        }
+        try {
+            return Long.parseLong(paramValue);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    protected Double getDoubleParameter(HttpServletRequest req, String paramName) {
+        String paramValue = req.getParameter(paramName);
+        if (paramValue == null) {
+            return null;
+        }
+        try {
+            return Double.parseDouble(paramValue);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    protected Integer getIntegerParameter(HttpServletRequest req, String paramName) {
+        String paramValue = req.getParameter(paramName);
+        if (paramValue == null) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(paramValue);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
 }

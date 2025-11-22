@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.mapper.ProductMapper;
 import com.my.model.Product;
+import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ public class InMemoryProductRepositoryImpl implements ProductRepository {
     private final AtomicLong currentId = new AtomicLong(1);
 
     @Override
-    public List<Product> getAll() {
+    public List<Product> getAll(ProductFilter filter) {
         return new ArrayList<>(repository.values());
     }
 

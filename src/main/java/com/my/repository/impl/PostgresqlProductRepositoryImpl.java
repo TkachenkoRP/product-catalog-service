@@ -1,8 +1,8 @@
 package com.my.repository.impl;
 
 import com.my.model.Product;
+import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
-import com.my.util.DBUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -14,8 +14,8 @@ import java.util.Optional;
 
 public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository implements ProductRepository {
 
-    public PostgresqlProductRepositoryImpl() throws SQLException {
-        super(DBUtil.getConnection());
+    public PostgresqlProductRepositoryImpl() {
+        super();
     }
 
     public PostgresqlProductRepositoryImpl(Connection connection) {
@@ -23,18 +23,57 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     }
 
     @Override
-    public List<Product> getAll() {
+    public List<Product> getAll(ProductFilter filter) {
         List<Product> products = new ArrayList<>();
-        String sql = String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product ORDER BY id", schema);
+        StringBuilder sql = new StringBuilder(
+                String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product", schema));
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                products.add(mapResultSetToProduct(rs));
+        List<Object> parameters = new ArrayList<>();
+        List<String> conditions = new ArrayList<>();
+
+        if (filter != null) {
+            if (filter.categoryId() != null) {
+                conditions.add("category_id = ?");
+                parameters.add(filter.categoryId());
+            }
+            if (filter.brandId() != null) {
+                conditions.add("brand_id = ?");
+                parameters.add(filter.brandId());
+            }
+            if (filter.minPrice() != null) {
+                conditions.add("price >= ?");
+                parameters.add(filter.minPrice());
+            }
+            if (filter.maxPrice() != null) {
+                conditions.add("price < ?");
+                parameters.add(filter.maxPrice());
+            }
+            if (filter.minStock() != null) {
+                conditions.add("stock >= ?");
+                parameters.add(filter.minStock());
+            }
+        }
+
+        if (!conditions.isEmpty()) {
+            sql.append(" WHERE ");
+            sql.append(String.join(" AND ", conditions));
+        }
+
+        sql.append(" ORDER BY id");
+
+        try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                statement.setObject(i + 1, parameters.get(i));
+            }
+            try (ResultSet rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    products.add(mapResultSetToProduct(rs));
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Ошибка получения продуктов", e);
         }
+
         return products;
     }
 

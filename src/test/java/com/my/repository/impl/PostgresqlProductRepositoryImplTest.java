@@ -15,7 +15,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenGetAllProducts_thenReturnAllProducts() {
-        List<Product> products = productRepository.getAll();
+        List<Product> products = productRepository.getAll(null);
 
         assertThat(products)
                 .isNotNull()
@@ -32,7 +32,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenGetProductById_withExistingId_thenReturnProduct() {
-        List<Product> products = productRepository.getAll();
+        List<Product> products = productRepository.getAll(null);
         Long existingProductId = products.get(0).getId();
 
         Optional<Product> productOpt = productRepository.getById(existingProductId);
@@ -93,7 +93,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenUpdateExistingProduct_thenProductIsUpdated() {
-        List<Product> products = productRepository.getAll();
+        List<Product> products = productRepository.getAll(null);
         Product existingProduct = products.get(0);
 
         List<Category> categories = categoryRepository.getAll();
@@ -202,7 +202,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
         assertThat(saved2).isNotNull();
         assertThat(saved1.getId()).isNotEqualTo(saved2.getId());
 
-        List<Product> allProducts = productRepository.getAll();
+        List<Product> allProducts = productRepository.getAll(null);
         long sameNameCount = allProducts.stream()
                 .filter(p -> p.getName().equals("Same Name Product"))
                 .count();

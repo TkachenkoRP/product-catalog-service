@@ -51,7 +51,7 @@ class ProductServiceImplTest {
         );
 
         when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
-        when(productRepository.getAll()).thenReturn(expectedProducts);
+        when(productRepository.getAll(null)).thenReturn(expectedProducts);
 
         List<Product> result = productService.getAll(null);
 
@@ -311,7 +311,7 @@ class ProductServiceImplTest {
     @Test
     void testGetMetrics() {
         when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
-        when(productRepository.getAll()).thenReturn(List.of());
+        when(productRepository.getAll(null)).thenReturn(List.of());
 
         productService.getAll(null);
 
@@ -324,7 +324,7 @@ class ProductServiceImplTest {
     @Test
     void testMetricsRecordedForAllOperations() {
         when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
-        when(productRepository.getAll()).thenReturn(List.of());
+        when(productRepository.getAll(null)).thenReturn(List.of());
         productService.getAll(null);
 
         when(cacheService.get("PRODUCT1")).thenReturn(null);

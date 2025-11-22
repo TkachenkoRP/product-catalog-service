@@ -1,55 +1,50 @@
 package com.my.service.impl;
 
+import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
 import com.my.model.AuditLog;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
+import com.my.repository.impl.PostgresqlProductRepositoryImpl;
 import com.my.service.AuditService;
 import com.my.service.CacheService;
 import com.my.service.ProductService;
-import lombok.RequiredArgsConstructor;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@RequiredArgsConstructor
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final AuditService auditService;
     private final CacheService cacheService;
 
+    public ProductServiceImpl() {
+        this(new PostgresqlProductRepositoryImpl(), new AuditServiceImpl(), new CacheService());
+    }
+
+    public ProductServiceImpl(ProductRepository productRepository, AuditService auditService, CacheService cacheService) {
+        this.productRepository = productRepository;
+        this.auditService = auditService;
+        this.cacheService = cacheService;
+    }
+
     private final Map<String, Long> metrics = new HashMap<>();
 
     @Override
     public List<Product> getAll(ProductFilter filter) {
-
-        long startTime = System.nanoTime();
-
-        List<Product> products = getCachedProducts();
-
-        if (filter == null) {
-            auditService.logAction(AuditLog.AuditActions.VIEW_ALL_PRODUCTS, "Просмотр всех товаров");
-            recordMetric("getAllProducts", System.nanoTime() - startTime);
-            return products;
-        }
-
-        auditService.logAction(AuditLog.AuditActions.VIEW_ALL_PRODUCTS, "Просмотр всех товаров c фильтром: " + filter);
-
-        List<Product> filteredProducts = applyFilters(products, filter);
-
-        recordMetric("getAllProductsWithFilter", System.nanoTime() - startTime);
-        return filteredProducts;
+        return productRepository.getAll(filter);
     }
 
     private List<Product> getCachedProducts() {
         List<Product> products = (List<Product>) cacheService.get(CacheService.CacheKey.ALL_PRODUCTS.name());
 
         if (products == null) {
-            products = productRepository.getAll();
+            products = productRepository.getAll(null);
             cacheService.put(CacheService.CacheKey.ALL_PRODUCTS.name(), new ArrayList<>(products));
         }
 
@@ -97,7 +92,8 @@ public class ProductServiceImpl implements ProductService {
         Product product = (Product) cacheService.get(CacheService.CacheKey.PRODUCT + id.toString());
 
         if (product == null) {
-            product = productRepository.getById(id).orElse(null);
+            product = productRepository.getById(id).orElseThrow(
+                    () -> new EntityNotFoundException(MessageFormat.format("Товар с id {0} не найден", id)));
             if (product != null) {
                 cacheService.put(CacheService.CacheKey.PRODUCT + id.toString(), product);
             }
@@ -123,9 +119,6 @@ public class ProductServiceImpl implements ProductService {
     public Product update(Long id, Product sourceProduct) {
         long startTime = System.nanoTime();
         Product updatedProduct = getById(id);
-        if (updatedProduct == null) {
-            return null;
-        }
         ProductMapper.INSTANCE.updateProduct(sourceProduct, updatedProduct);
         Product updated = productRepository.update(updatedProduct);
         cacheService.invalidate(CacheService.CacheKey.PRODUCT + id.toString());
