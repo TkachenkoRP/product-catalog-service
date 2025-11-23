@@ -1,5 +1,6 @@
 package com.my.servlet;
 
+import com.my.annotation.Loggable;
 import com.my.dto.ApiResponse;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+@Loggable
 @WebServlet("/auth")
 public class AuthServlet extends BaseServlet {
     private final UserService userService;

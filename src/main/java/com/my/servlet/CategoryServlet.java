@@ -1,5 +1,6 @@
 package com.my.servlet;
 
+import com.my.annotation.Loggable;
 import com.my.dto.ApiResponse;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+@Loggable
 @WebServlet("/category")
 public class CategoryServlet extends BaseServlet {
     private final CategoryService categoryService;
