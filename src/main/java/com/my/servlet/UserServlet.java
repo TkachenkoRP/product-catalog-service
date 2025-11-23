@@ -5,11 +5,14 @@ import com.my.dto.ApiResponse;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.AlreadyExistException;
+import com.my.exception.ArgumentNotValidException;
+import com.my.exception.EmptyBodyException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.service.UserService;
 import com.my.service.impl.UserServiceImpl;
+import com.my.validation.Validation;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -73,14 +76,17 @@ public class UserServlet extends BaseServlet {
             }
 
             UserRequestDto requestDto = parseJson(req, UserRequestDto.class);
+
+            Validation.validateUserUpdate(requestDto);
+
             User entity = userMapper.toEntity(requestDto);
             User updated = userService.update(id.get(), entity);
             UserResponseDto result = userMapper.toDto(updated);
             sendJson(resp, ApiResponse.success(result));
-        } catch (EntityNotFoundException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (EntityNotFoundException | EmptyBodyException | AlreadyExistException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_NOT_FOUND);
-        } catch (AlreadyExistException e) {
-            sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка обновления пользователя: " + e.getMessage(),
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

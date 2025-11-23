@@ -5,11 +5,14 @@ import com.my.dto.ApiResponse;
 import com.my.dto.BrandRequestDto;
 import com.my.dto.BrandResponseDto;
 import com.my.exception.AlreadyExistException;
+import com.my.exception.ArgumentNotValidException;
+import com.my.exception.EmptyBodyException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
 import com.my.service.BrandService;
 import com.my.service.impl.BrandServiceImpl;
+import com.my.validation.Validation;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -66,6 +69,8 @@ public class BrandServlet extends BaseServlet {
         try {
             BrandRequestDto requestDto = parseJson(req, BrandRequestDto.class);
 
+            Validation.validateBrandCreate(requestDto);
+
             if (brandService.existsByName(requestDto.name())) {
                 sendError(resp, String.format("Бренд %s уже имеется", requestDto.name()),
                         HttpServletResponse.SC_BAD_REQUEST);
@@ -78,7 +83,9 @@ public class BrandServlet extends BaseServlet {
 
             sendJson(resp, ApiResponse.success(result), HttpServletResponse.SC_CREATED);
 
-        } catch (AlreadyExistException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (AlreadyExistException | EmptyBodyException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка создания бренда: " + e.getMessage(),
@@ -96,11 +103,16 @@ public class BrandServlet extends BaseServlet {
             }
 
             BrandRequestDto requestDto = parseJson(req, BrandRequestDto.class);
+
+            Validation.validateBrandUpdate(requestDto);
+
             Brand entity = brandMapper.toEntity(requestDto);
             Brand updated = brandService.update(id.get(), entity);
             BrandResponseDto result = brandMapper.toDto(updated);
             sendJson(resp, ApiResponse.success(result));
-        } catch (EntityNotFoundException | AlreadyExistException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (EntityNotFoundException | AlreadyExistException | EmptyBodyException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка обновления бренда: " + e.getMessage(),

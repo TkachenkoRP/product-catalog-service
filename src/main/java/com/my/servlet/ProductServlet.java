@@ -4,12 +4,15 @@ import com.my.annotation.Loggable;
 import com.my.dto.ApiResponse;
 import com.my.dto.ProductRequestDto;
 import com.my.dto.ProductResponseDto;
+import com.my.exception.ArgumentNotValidException;
+import com.my.exception.EmptyBodyException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.service.ProductService;
 import com.my.service.impl.ProductServiceImpl;
+import com.my.validation.Validation;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -76,11 +79,18 @@ public class ProductServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             ProductRequestDto requestDto = parseJson(req, ProductRequestDto.class);
+
+            Validation.validateProductCreate(requestDto);
+
             Product entity = productMapper.toEntity(requestDto);
             Product saved = productService.save(entity);
             ProductResponseDto result = productMapper.toDto(saved);
 
             sendJson(resp, ApiResponse.success(result), HttpServletResponse.SC_CREATED);
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (EmptyBodyException e) {
+            sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка создания товара: " + e.getMessage(),
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -97,11 +107,16 @@ public class ProductServlet extends BaseServlet {
             }
 
             ProductRequestDto requestDto = parseJson(req, ProductRequestDto.class);
+
+            Validation.validateProductUpdate(requestDto);
+
             Product entity = productMapper.toEntity(requestDto);
             Product updated = productService.update(id.get(), entity);
             ProductResponseDto result = productMapper.toDto(updated);
             sendJson(resp, ApiResponse.success(result));
-        } catch (EntityNotFoundException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (EntityNotFoundException | EmptyBodyException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка обновления товара: " + e.getMessage(),

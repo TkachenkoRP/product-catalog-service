@@ -3,6 +3,7 @@ package com.my.servlet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.configuration.JacksonConfig;
 import com.my.dto.ApiResponse;
+import com.my.exception.EmptyBodyException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +15,15 @@ public abstract class BaseServlet extends HttpServlet {
     protected final ObjectMapper objectMapper = JacksonConfig.createObjectMapper();
 
     protected <T> T parseJson(HttpServletRequest req, Class<T> clazz) throws IOException {
+        validateRequestBody(req);
         return objectMapper.readValue(req.getInputStream(), clazz);
+    }
+
+    protected void validateRequestBody(HttpServletRequest req) {
+        int contentLength = req.getContentLength();
+        if (contentLength <= 0) {
+            throw new EmptyBodyException("Тело запроса пустое");
+        }
     }
 
     protected void sendJson(HttpServletResponse resp, Object object) throws IOException {
@@ -31,6 +40,10 @@ public abstract class BaseServlet extends HttpServlet {
     protected void sendError(HttpServletResponse resp, String message, int status) throws IOException {
         ApiResponse<?> response = ApiResponse.error(message);
         sendJson(resp, response, status);
+    }
+
+    protected void sendValidationError(HttpServletResponse resp, String message) throws IOException {
+        sendError(resp, "Ошибка валидации: " + message, HttpServletResponse.SC_BAD_REQUEST);
     }
 
     protected Optional<Long> getId(HttpServletRequest req) {

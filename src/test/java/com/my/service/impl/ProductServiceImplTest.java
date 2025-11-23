@@ -1,10 +1,8 @@
 package com.my.service.impl;
 
-import com.my.model.AuditLog;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
-import com.my.service.AuditService;
 import com.my.service.CacheService;
 import com.my.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,13 +12,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,16 +26,13 @@ class ProductServiceImplTest {
     private ProductRepository productRepository;
 
     @Mock
-    private AuditService auditService;
-
-    @Mock
     private CacheService cacheService;
 
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductServiceImpl(productRepository, auditService, cacheService);
+        productService = new ProductServiceImpl(productRepository, cacheService);
     }
 
     @Test
@@ -57,7 +49,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isEqualTo(expectedProducts);
         verify(cacheService).put("ALL_PRODUCTS", expectedProducts);
-        verify(auditService).logAction(AuditLog.AuditActions.VIEW_ALL_PRODUCTS, "Просмотр всех товаров");
     }
 
     @Test
@@ -76,8 +67,6 @@ class ProductServiceImplTest {
         assertThat(result).hasSize(2);
         assertThat(result).extracting(Product::getId).containsExactly(1L, 3L);
         assertThat(result).extracting(Product::getCategoryId).containsOnly(1L);
-
-        verify(auditService).logAction(eq(AuditLog.AuditActions.VIEW_ALL_PRODUCTS), anyString());
     }
 
     @Test
@@ -205,7 +194,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isEqualTo(expectedProduct);
         verify(cacheService).put("PRODUCT1", expectedProduct);
-        verify(auditService).logAction(AuditLog.AuditActions.VIEW_PRODUCT, "Просмотрен товар ID: 1");
     }
 
     @Test
@@ -218,7 +206,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isEqualTo(cachedProduct);
         verify(productRepository, never()).getById(any());
-        verify(auditService).logAction(AuditLog.AuditActions.VIEW_PRODUCT, "Просмотрен товар ID: 1");
     }
 
     @Test
@@ -230,7 +217,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isNull();
         verify(cacheService, never()).put(any(), any());
-        verify(auditService).logAction(AuditLog.AuditActions.VIEW_PRODUCT, "Просмотрен товар ID: 1");
     }
 
     @Test
@@ -244,7 +230,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isEqualTo(savedProduct);
         verify(cacheService).invalidate("ALL_PRODUCTS");
-        verify(auditService).logAction(AuditLog.AuditActions.ADD_PRODUCT, "Добавлен товар: New Product");
     }
 
     @Test
@@ -267,7 +252,6 @@ class ProductServiceImplTest {
 
         verify(cacheService).invalidate("PRODUCT1");
         verify(cacheService).invalidate("ALL_PRODUCTS");
-        verify(auditService).logAction(AuditLog.AuditActions.UPDATE_PRODUCT, "Обновлен товар ID: 1");
     }
 
     @Test
@@ -282,7 +266,6 @@ class ProductServiceImplTest {
         assertThat(result).isNull();
         verify(productRepository, never()).update(any());
         verify(cacheService, never()).invalidate(any());
-        verify(auditService, never()).logAction(eq(AuditLog.AuditActions.UPDATE_PRODUCT), anyString());
     }
 
     @Test
@@ -294,7 +277,6 @@ class ProductServiceImplTest {
         assertThat(result).isTrue();
         verify(cacheService).invalidate("PRODUCT1");
         verify(cacheService).invalidate("ALL_PRODUCTS");
-        verify(auditService).logAction(AuditLog.AuditActions.DELETE_PRODUCT, "Удален товар ID: 1");
     }
 
     @Test
@@ -305,7 +287,6 @@ class ProductServiceImplTest {
 
         assertThat(result).isFalse();
         verify(cacheService, never()).invalidate(any());
-        verify(auditService, never()).logAction(eq(AuditLog.AuditActions.DELETE_PRODUCT), anyString());
     }
 
     @Test

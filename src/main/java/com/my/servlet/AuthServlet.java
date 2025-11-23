@@ -5,11 +5,14 @@ import com.my.dto.ApiResponse;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.AlreadyExistException;
+import com.my.exception.ArgumentNotValidException;
+import com.my.exception.EmptyBodyException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.service.UserService;
 import com.my.service.impl.UserServiceImpl;
+import com.my.validation.Validation;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -46,7 +49,9 @@ public class AuthServlet extends BaseServlet {
                 sendError(resp, "Неизвестное действие. Доступные действия: register, login, logout",
                         HttpServletResponse.SC_BAD_REQUEST);
             }
-        } catch (AlreadyExistException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (AlreadyExistException | EmptyBodyException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (EntityNotFoundException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_NOT_FOUND);
@@ -58,6 +63,9 @@ public class AuthServlet extends BaseServlet {
 
     private void registerUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         UserRequestDto requestDto = parseJson(req, UserRequestDto.class);
+
+        Validation.validateUserRegistration(requestDto);
+
         User registration = userService.registration(requestDto.email(), requestDto.username(), requestDto.password());
         UserResponseDto result = userMapper.toDto(registration);
         sendJson(resp, ApiResponse.success(result), HttpServletResponse.SC_CREATED);

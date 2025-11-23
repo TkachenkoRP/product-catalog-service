@@ -5,11 +5,14 @@ import com.my.dto.ApiResponse;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
 import com.my.exception.AlreadyExistException;
+import com.my.exception.ArgumentNotValidException;
+import com.my.exception.EmptyBodyException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.service.CategoryService;
 import com.my.service.impl.CategoryServiceImpl;
+import com.my.validation.Validation;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -68,6 +71,8 @@ public class CategoryServlet extends BaseServlet {
         try {
             CategoryRequestDto requestDto = parseJson(req, CategoryRequestDto.class);
 
+            Validation.validateCategoryCreate(requestDto);
+
             if (categoryService.existsByName(requestDto.name())) {
                 sendError(resp, String.format("Категория %s уже имеется", requestDto.name()),
                         HttpServletResponse.SC_BAD_REQUEST);
@@ -80,7 +85,9 @@ public class CategoryServlet extends BaseServlet {
 
             sendJson(resp, ApiResponse.success(result), HttpServletResponse.SC_CREATED);
 
-        } catch (AlreadyExistException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (AlreadyExistException | EmptyBodyException e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка создания категории: " + e.getMessage(),
@@ -97,12 +104,17 @@ public class CategoryServlet extends BaseServlet {
                 return;
             }
 
-            CategoryRequestDto categoryDto = parseJson(req, CategoryRequestDto.class);
-            Category entity = categoryMapper.toEntity(categoryDto);
+            CategoryRequestDto requestDto = parseJson(req, CategoryRequestDto.class);
+
+            Validation.validateCategoryUpdate(requestDto);
+
+            Category entity = categoryMapper.toEntity(requestDto);
             Category updated = categoryService.update(id.get(), entity);
             CategoryResponseDto result = categoryMapper.toDto(updated);
             sendJson(resp, ApiResponse.success(result));
-        } catch (EntityNotFoundException | AlreadyExistException e) {
+        } catch (ArgumentNotValidException e) {
+            sendValidationError(resp, e.getMessage());
+        } catch (EntityNotFoundException | AlreadyExistException | EmptyBodyException  e) {
             sendError(resp, e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (Exception e) {
             sendError(resp, "Ошибка обновления категории: " + e.getMessage(),
