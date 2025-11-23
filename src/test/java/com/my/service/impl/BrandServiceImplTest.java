@@ -1,5 +1,7 @@
 package com.my.service.impl;
 
+import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityNotFoundException;
 import com.my.model.Brand;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -100,13 +103,11 @@ class BrandServiceImplTest {
 
     @Test
     void testGetByIdNotFound() {
-        when(cacheService.get("BRAND1")).thenReturn(null);
         when(brandRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Brand result = brandService.getById(1L);
-
-        assertThat(result).isNull();
-        verify(cacheService, never()).put(any(), any());
+        assertThatThrownBy(() -> brandService.getById(1L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Бренд с id 1 не найден");
     }
 
     @Test
@@ -129,11 +130,9 @@ class BrandServiceImplTest {
 
         when(brandRepository.existsByNameIgnoreCase("Existing Brand")).thenReturn(true);
 
-        Brand result = brandService.save(brandToSave);
-
-        assertThat(result).isNull();
-        verify(brandRepository, never()).save(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> brandService.save(brandToSave))
+                .isInstanceOf(AlreadyExistException.class)
+                .hasMessage("Existing Brand уже существует");
     }
 
     @Test
@@ -160,11 +159,9 @@ class BrandServiceImplTest {
 
         when(brandRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Brand result = brandService.update(1L, sourceBrand);
-
-        assertThat(result).isNull();
-        verify(brandRepository, never()).update(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> brandService.update(1L, sourceBrand))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Бренд с id 1 не найден");
     }
 
     @Test
@@ -175,11 +172,9 @@ class BrandServiceImplTest {
         when(brandRepository.getById(1L)).thenReturn(Optional.of(existingBrand));
         when(brandRepository.existsByNameIgnoreCase("Existing Brand")).thenReturn(true);
 
-        Brand result = brandService.update(1L, sourceBrand);
-
-        assertThat(result).isNull();
-        verify(brandRepository, never()).update(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> brandService.update(1L, sourceBrand))
+                .isInstanceOf(AlreadyExistException.class)
+                .hasMessage("Existing Brand уже существует");
     }
 
     @Test

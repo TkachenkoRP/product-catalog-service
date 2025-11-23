@@ -86,7 +86,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
         try {
             brandRepository.update(nonExistentBrand);
         } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка поиска бренда с ID: 999");
+            assertThat(e).hasMessageContaining("Ошибка обновления бренда с ID: 999");
         }
     }
 

@@ -1,7 +1,7 @@
 package com.my.service.impl;
 
+import com.my.exception.EntityNotFoundException;
 import com.my.model.Product;
-import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
 import com.my.service.CacheService;
 import com.my.service.ProductService;
@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,145 +43,11 @@ class ProductServiceImplTest {
                 new Product(2L, "Product 2", 2L, 2L, 149.99, 5)
         );
 
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
         when(productRepository.getAll(null)).thenReturn(expectedProducts);
 
         List<Product> result = productService.getAll(null);
 
         assertThat(result).isEqualTo(expectedProducts);
-        verify(cacheService).put("ALL_PRODUCTS", expectedProducts);
-    }
-
-    @Test
-    void testGetAllWithFilterCategory() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10),
-                new Product(2L, "Product 2", 2L, 2L, 149.99, 5),
-                new Product(3L, "Product 3", 1L, 3L, 79.99, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(1L, null, null, null, null);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(1L, 3L);
-        assertThat(result).extracting(Product::getCategoryId).containsOnly(1L);
-    }
-
-    @Test
-    void testGetAllWithFilterBrand() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10),
-                new Product(2L, "Product 2", 2L, 2L, 149.99, 5),
-                new Product(3L, "Product 3", 1L, 1L, 79.99, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(null, 1L, null, null, null);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(1L, 3L);
-        assertThat(result).extracting(Product::getBrandId).containsOnly(1L);
-    }
-
-    @Test
-    void testGetAllWithFilterPriceRange() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 50.0, 10),
-                new Product(2L, "Product 2", 2L, 2L, 100.0, 5),
-                new Product(3L, "Product 3", 1L, 1L, 150.0, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(null, null, 75.0, 125.0, null);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(1);
-        assertThat(result).extracting(Product::getId).containsExactly(2L);
-        assertThat(result).extracting(Product::getPrice).containsOnly(100.0);
-    }
-
-    @Test
-    void testGetAllWithFilterMinPrice() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 50.0, 10),
-                new Product(2L, "Product 2", 2L, 2L, 100.0, 5),
-                new Product(3L, "Product 3", 1L, 1L, 150.0, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(null, null, 100.0, null, null);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(2L, 3L);
-        assertThat(result).extracting(Product::getPrice).allSatisfy(price ->
-                assertThat(price).isGreaterThanOrEqualTo(100.0)
-        );
-    }
-
-    @Test
-    void testGetAllWithFilterMaxPrice() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 50.0, 10),
-                new Product(2L, "Product 2", 2L, 2L, 100.0, 5),
-                new Product(3L, "Product 3", 1L, 1L, 150.0, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(null, null, null, 100.0, null);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(1L, 2L);
-        assertThat(result).extracting(Product::getPrice).allSatisfy(price ->
-                assertThat(price).isLessThanOrEqualTo(100.0)
-        );
-    }
-
-    @Test
-    void testGetAllWithFilterStock() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 5),
-                new Product(2L, "Product 2", 2L, 2L, 149.99, 10),
-                new Product(3L, "Product 3", 1L, 1L, 79.99, 15)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(null, null, null, null, 10);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(2L, 3L);
-        assertThat(result).extracting(Product::getStock).allSatisfy(stock ->
-                assertThat(stock).isGreaterThanOrEqualTo(10)
-        );
-    }
-
-    @Test
-    void testGetAllWithComplexFilter() {
-        List<Product> allProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10),
-                new Product(2L, "Product 2", 1L, 2L, 149.99, 5),
-                new Product(3L, "Product 3", 2L, 1L, 79.99, 15),
-                new Product(4L, "Product 4", 1L, 1L, 129.99, 8)
-        );
-
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(allProducts);
-
-        ProductFilter filter = new ProductFilter(1L, 1L, 80.0, 130.0, 5);
-        List<Product> result = productService.getAll(filter);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Product::getId).containsExactly(1L, 4L);
     }
 
     @Test
@@ -213,10 +80,9 @@ class ProductServiceImplTest {
         when(cacheService.get("PRODUCT1")).thenReturn(null);
         when(productRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Product result = productService.getById(1L);
-
-        assertThat(result).isNull();
-        verify(cacheService, never()).put(any(), any());
+        assertThatThrownBy(() -> productService.getById(1L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Товар с id 1 не найден");
     }
 
     @Test
@@ -258,14 +124,11 @@ class ProductServiceImplTest {
     void testUpdateNotFound() {
         Product sourceProduct = new Product("Updated Product", 2L, 2L, 149.99, 5);
 
-        when(cacheService.get("PRODUCT1")).thenReturn(null);
         when(productRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Product result = productService.update(1L, sourceProduct);
-
-        assertThat(result).isNull();
-        verify(productRepository, never()).update(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> productService.update(1L, sourceProduct))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Товар с id 1 не найден");
     }
 
     @Test

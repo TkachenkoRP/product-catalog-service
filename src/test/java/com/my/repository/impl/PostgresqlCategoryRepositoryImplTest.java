@@ -86,7 +86,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
         try {
             categoryRepository.update(nonExistentCategory);
         } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка поиска категории с ID: 999");
+            assertThat(e).hasMessageContaining("Ошибка обновления категории с ID: 999");
         }
     }
 

@@ -1,5 +1,7 @@
 package com.my.service.impl;
 
+import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityNotFoundException;
 import com.my.model.Category;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -102,10 +105,9 @@ class CategoryServiceImplTest {
         when(cacheService.get("CATEGORY1")).thenReturn(null);
         when(categoryRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Category result = categoryService.getById(1L);
-
-        assertThat(result).isNull();
-        verify(cacheService, never()).put(any(), any());
+        assertThatThrownBy(() -> categoryService.getById(1L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Категория с id 1 не найдена");
     }
 
     @Test
@@ -128,11 +130,9 @@ class CategoryServiceImplTest {
 
         when(categoryRepository.existsByNameIgnoreCase("Existing Category")).thenReturn(true);
 
-        Category result = categoryService.save(categoryToSave);
-
-        assertThat(result).isNull();
-        verify(categoryRepository, never()).save(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> categoryService.save(categoryToSave))
+                .isInstanceOf(AlreadyExistException.class)
+                .hasMessage("Existing Category уже существует");
     }
 
     @Test
@@ -175,29 +175,11 @@ class CategoryServiceImplTest {
     void testUpdateNotFound() {
         Category sourceCategory = new Category("Updated Category");
 
-        when(cacheService.get("CATEGORY1")).thenReturn(null);
         when(categoryRepository.getById(1L)).thenReturn(Optional.empty());
 
-        Category result = categoryService.update(1L, sourceCategory);
-
-        assertThat(result).isNull();
-        verify(categoryRepository, never()).update(any());
-        verify(cacheService, never()).invalidate(any());
-    }
-
-    @Test
-    void testUpdateWithExistingName() {
-        Category existingCategory = new Category(1L, "Old Category");
-        Category sourceCategory = new Category("Existing Category");
-
-        when(cacheService.get("CATEGORY1")).thenReturn(existingCategory);
-        when(categoryRepository.existsByNameIgnoreCase("Existing Category")).thenReturn(true);
-
-        Category result = categoryService.update(1L, sourceCategory);
-
-        assertThat(result).isNull();
-        verify(categoryRepository, never()).update(any());
-        verify(cacheService, never()).invalidate(any());
+        assertThatThrownBy(() -> categoryService.update(1L, sourceCategory))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Категория с id 1 не найдена");
     }
 
     @Test

@@ -1,5 +1,7 @@
 package com.my.service.impl;
 
+import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityNotFoundException;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UserServiceImplTest {
 
@@ -36,9 +39,9 @@ class UserServiceImplTest {
 
     @Test
     void testRegistrationEmailTaken() {
-        User registeredUser = userService.registration("admin@my.ru", "password", "New User");
-
-        assertThat(registeredUser).isNull();
+        assertThatThrownBy(() -> userService.registration("admin@my.ru", "password", "New User"))
+                .isInstanceOf(AlreadyExistException.class)
+                .hasMessage("admin@my.ru уже используется");
     }
 
     @Test
@@ -52,16 +55,16 @@ class UserServiceImplTest {
 
     @Test
     void testLoginWrongPassword() {
-        User loggedInUser = userService.login("admin@my.ru", "wrongpassword");
-
-        assertThat(loggedInUser).isNull();
+        assertThatThrownBy(() -> userService.login("admin@my.ru", "wrongpassword"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Введены неверные данные");
     }
 
     @Test
     void testLoginWrongEmail() {
-        User loggedInUser = userService.login("wrong@example.com", "aDmIn");
-
-        assertThat(loggedInUser).isNull();
+        assertThatThrownBy(() -> userService.login("wrong@example.com", "aDmIn"))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Введены неверные данные");
     }
 
     @Test
@@ -81,9 +84,9 @@ class UserServiceImplTest {
 
     @Test
     void testGetByIdNotFound() {
-        User user = userService.getById(999L);
-
-        assertThat(user).isNull();
+        assertThatThrownBy(() -> userService.getById(999L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Пользователь с id 999 не найден");
     }
 
     @Test
@@ -102,9 +105,9 @@ class UserServiceImplTest {
         User sourceUser = new User();
         sourceUser.setEmail("user@my.ru");
 
-        User updatedUser = userService.update(1L, sourceUser);
-
-        assertThat(updatedUser).isNull();
+        assertThatThrownBy(() -> userService.update(1L, sourceUser))
+                .isInstanceOf(AlreadyExistException.class)
+                .hasMessage("user@my.ru уже используется");
     }
 
     @Test
@@ -123,9 +126,9 @@ class UserServiceImplTest {
         User sourceUser = new User();
         sourceUser.setUsername("New Name");
 
-        User updatedUser = userService.update(999L, sourceUser);
-
-        assertThat(updatedUser).isNull();
+        assertThatThrownBy(() -> userService.update(999L, sourceUser))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Пользователь с id 999 не найден");
     }
 
     @Test
@@ -134,8 +137,9 @@ class UserServiceImplTest {
 
         assertThat(deleted).isTrue();
 
-        User user = userService.getById(1L);
-        assertThat(user).isNull();
+        assertThatThrownBy(() -> userService.getById(1L))
+                .isInstanceOf(EntityNotFoundException.class)
+                .hasMessage("Пользователь с id 1 не найден");
     }
 
     @Test
