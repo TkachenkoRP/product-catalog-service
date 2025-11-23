@@ -309,55 +309,6 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void testGetMetrics() {
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
-        when(productRepository.getAll(null)).thenReturn(List.of());
-
-        productService.getAll(null);
-
-        Map<String, Long> metrics = productService.getMetrics();
-
-        assertThat(metrics).isNotNull().containsKey("getAllProducts");
-        assertThat(metrics.get("getAllProducts")).isPositive();
-    }
-
-    @Test
-    void testMetricsRecordedForAllOperations() {
-        when(cacheService.get("ALL_PRODUCTS")).thenReturn(null);
-        when(productRepository.getAll(null)).thenReturn(List.of());
-        productService.getAll(null);
-
-        when(cacheService.get("PRODUCT1")).thenReturn(null);
-        when(productRepository.getById(1L)).thenReturn(Optional.empty());
-        productService.getById(1L);
-
-        Product product = new Product("Test", 1L, 1L, 99.99, 10);
-        when(productRepository.save(any())).thenReturn(product);
-        productService.save(product);
-
-        when(cacheService.get("PRODUCT1")).thenReturn(product);
-        when(productRepository.update(any())).thenReturn(product);
-        productService.update(1L, product);
-
-        when(productRepository.deleteById(1L)).thenReturn(true);
-        productService.deleteById(1L);
-
-        Map<String, Long> metrics = productService.getMetrics();
-
-        assertThat(metrics).containsKeys(
-                "getAllProducts",
-                "getProduct",
-                "addProduct",
-                "updateProduct",
-                "deleteProduct"
-        );
-
-        metrics.values().forEach(duration ->
-                assertThat(duration).isPositive()
-        );
-    }
-
-    @Test
     void testCacheInvalidationOnSave() {
         Product product = new Product("New Product", 1L, 1L, 99.99, 10);
         Product savedProduct = new Product(1L, "New Product", 1L, 1L, 99.99, 10);

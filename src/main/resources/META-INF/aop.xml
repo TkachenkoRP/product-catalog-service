@@ -6,5 +6,6 @@
 
     <aspects>
         <aspect name="com.my.aspect.LoggingAspect"/>
+        <aspect name="com.my.aspect.AuditAspect"/>
     </aspects>
 </aspectj>

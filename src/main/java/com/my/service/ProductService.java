@@ -4,7 +4,6 @@ import com.my.model.Product;
 import com.my.model.ProductFilter;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Сервис для управления товарами.
@@ -50,11 +49,4 @@ public interface ProductService {
      * @return {@code true} если удаление прошло успешно, {@code false} если товар не найден
      */
     boolean deleteById(Long id);
-
-    /**
-     * Получает метрики по товарам.
-     *
-     * @return карта метрик, где ключ - название метрики, значение - числовое значение метрики
-     */
-    Map<String, Long> getMetrics();
 }
