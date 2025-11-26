@@ -32,7 +32,6 @@ public class BrandServiceImpl implements BrandService {
     public List<Brand> getAll() {
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
         List<Brand> brands = cacheService.getList(cacheKey, Brand.class);
-        System.out.println("Кэш:\n" + brands);
 
         if (brands == null) {
             brands = brandRepository.getAll();
@@ -46,7 +45,6 @@ public class BrandServiceImpl implements BrandService {
     public Brand getById(Long id) {
         String cacheKey = CacheKeyGenerator.generateBrandKey(id);
         Brand brand = cacheService.get(cacheKey, Brand.class);
-        System.out.println("Кэш:\n" + brand);
 
         if (brand == null) {
             brand = brandRepository.getById(id).orElseThrow(

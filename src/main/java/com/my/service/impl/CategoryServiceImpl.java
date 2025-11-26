@@ -32,7 +32,6 @@ public class CategoryServiceImpl implements CategoryService {
     public List<Category> getAll() {
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
         List<Category> categories = cacheService.getList(cacheKey, Category.class);
-        System.out.println("Кэш:\n" + categories);
 
         if (categories == null) {
             categories = categoryRepository.getAll();
@@ -46,7 +45,6 @@ public class CategoryServiceImpl implements CategoryService {
     public Category getById(Long id) {
         String cacheKey = CacheKeyGenerator.generateCategoryKey(id);
         Category category = cacheService.get(cacheKey, Category.class);
-        System.out.println("Кэш:\n" + category);
 
         if (category == null) {
             category = categoryRepository.getById(id).orElseThrow(

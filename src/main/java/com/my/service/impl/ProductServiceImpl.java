@@ -34,7 +34,6 @@ public class ProductServiceImpl implements ProductService {
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         List<Product> products = cacheService.getList(cacheKey, Product.class);
-        System.out.println("Кэш:\n" + products);
 
         if (products == null) {
             products = productRepository.getAll(filter);
@@ -48,7 +47,6 @@ public class ProductServiceImpl implements ProductService {
     public Product getById(Long id) {
         String cacheKey = CacheKeyGenerator.generateProductKey(id);
         Product product = cacheService.get(cacheKey, Product.class);
-        System.out.println("Кэш:\n" + product);
 
         if (product == null) {
             product = productRepository.getById(id)
