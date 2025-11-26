@@ -8,55 +8,32 @@ import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.CategoryRepository;
 import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
-import com.my.service.CacheService;
 import com.my.service.CategoryService;
 import com.my.service.ProductService;
 import lombok.RequiredArgsConstructor;
 
 import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final CacheService cacheService;
     private final ProductService productService;
 
     public CategoryServiceImpl() {
         this(new PostgresqlCategoryRepositoryImpl(), new ProductServiceImpl());
     }
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, ProductService productService) {
-        this.categoryRepository = categoryRepository;
-        this.productService = productService;
-        this.cacheService = new CacheService();
-    }
-
     @Override
     public List<Category> getAll() {
-        List<Category> categories = (List<Category>) cacheService.get(CacheService.CacheKey.ALL_CATEGORIES.name());
-
-        if (categories == null) {
-            categories = categoryRepository.getAll();
-            cacheService.put(CacheService.CacheKey.ALL_CATEGORIES.name(), new ArrayList<>(categories));
-        }
-
-        return categories;
+        return categoryRepository.getAll();
     }
 
     @Override
     public Category getById(Long id) {
-        Category category = (Category) cacheService.get(CacheService.CacheKey.CATEGORY + id.toString());
-        if (category == null) {
-            category = categoryRepository.getById(id).orElseThrow(
-                    () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
-            if (category != null) {
-                cacheService.put(CacheService.CacheKey.CATEGORY + id.toString(), category);
-            }
-        }
-        return category;
+        return categoryRepository.getById(id).orElseThrow(
+                () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
     }
 
     @Override
@@ -64,9 +41,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (existsByName(category.getName())) {
             throw new AlreadyExistException(category.getName() + " уже существует");
         }
-        Category saved = categoryRepository.save(category);
-        cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
-        return saved;
+        return categoryRepository.save(category);
     }
 
     @Override
@@ -76,10 +51,7 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AlreadyExistException(sourceCategory.getName() + " уже существует");
         }
         CategoryMapper.INSTANCE.updateCategory(sourceCategory, updatedCategory);
-        Category updated = categoryRepository.update(updatedCategory);
-        cacheService.invalidate(CacheService.CacheKey.CATEGORY + id.toString());
-        cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
-        return updated;
+        return categoryRepository.update(updatedCategory);
     }
 
     @Override
@@ -87,12 +59,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (hasProductsWithCategory(id)) {
             return false;
         }
-        boolean success = categoryRepository.deleteById(id);
-        if (success) {
-            cacheService.invalidate(CacheService.CacheKey.CATEGORY + id.toString());
-            cacheService.invalidate(CacheService.CacheKey.ALL_CATEGORIES.name());
-        }
-        return success;
+        return categoryRepository.deleteById(id);
     }
 
     private boolean hasProductsWithCategory(Long categoryId) {

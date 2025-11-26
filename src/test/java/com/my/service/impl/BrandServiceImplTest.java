@@ -7,7 +7,6 @@ import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.BrandRepository;
 import com.my.service.BrandService;
-import com.my.service.CacheService;
 import com.my.service.ProductService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,72 +32,38 @@ class BrandServiceImplTest {
     private BrandRepository brandRepository;
 
     @Mock
-    private CacheService cacheService;
-
-    @Mock
     private ProductService productService;
 
     private BrandService brandService;
 
     @BeforeEach
     void setUp() {
-        brandService = new BrandServiceImpl(brandRepository, cacheService, productService);
+        brandService = new BrandServiceImpl(brandRepository, productService);
     }
 
     @Test
-    void testGetAllWithCache() {
+    void testGetAll() {
         List<Brand> expectedBrands = List.of(
                 new Brand(1L, "Brand 1"),
                 new Brand(2L, "Brand 2")
         );
 
-        when(cacheService.get("ALL_BRANDS")).thenReturn(null);
         when(brandRepository.getAll()).thenReturn(expectedBrands);
 
         List<Brand> result = brandService.getAll();
 
         assertThat(result).isEqualTo(expectedBrands);
-        verify(cacheService).put("ALL_BRANDS", expectedBrands);
     }
 
     @Test
-    void testGetAllFromCache() {
-        List<Brand> cachedBrands = List.of(
-                new Brand(1L, "Cached Brand 1"),
-                new Brand(2L, "Cached Brand 2")
-        );
-
-        when(cacheService.get("ALL_BRANDS")).thenReturn(cachedBrands);
-
-        List<Brand> result = brandService.getAll();
-
-        assertThat(result).isEqualTo(cachedBrands);
-        verify(brandRepository, never()).getAll();
-    }
-
-    @Test
-    void testGetByIdWithCache() {
+    void testGetById() {
         Brand expectedBrand = new Brand(1L, "Test Brand");
 
-        when(cacheService.get("BRAND1")).thenReturn(null);
         when(brandRepository.getById(1L)).thenReturn(Optional.of(expectedBrand));
 
         Brand result = brandService.getById(1L);
 
         assertThat(result).isEqualTo(expectedBrand);
-        verify(cacheService).put("BRAND1", expectedBrand);
-    }
-
-    @Test
-    void testGetByIdFromCache() {
-        Brand cachedBrand = new Brand(1L, "Cached Brand");
-
-        when(cacheService.get("BRAND1")).thenReturn(cachedBrand);
-
-        Brand result = brandService.getById(1L);
-
-        assertThat(result).isEqualTo(cachedBrand);
-        verify(brandRepository, never()).getById(any());
     }
 
     @Test
@@ -121,7 +86,6 @@ class BrandServiceImplTest {
         Brand result = brandService.save(brandToSave);
 
         assertThat(result).isEqualTo(savedBrand);
-        verify(cacheService).invalidate("ALL_BRANDS");
     }
 
     @Test
@@ -149,8 +113,6 @@ class BrandServiceImplTest {
 
         assertThat(result).isEqualTo(updatedBrand);
         assertThat(existingBrand.getName()).isEqualTo("Updated Brand");
-        verify(cacheService).invalidate("BRAND1");
-        verify(cacheService).invalidate("ALL_BRANDS");
     }
 
     @Test
@@ -185,8 +147,6 @@ class BrandServiceImplTest {
         boolean result = brandService.deleteById(1L);
 
         assertThat(result).isTrue();
-        verify(cacheService).invalidate("BRAND1");
-        verify(cacheService).invalidate("ALL_BRANDS");
     }
 
     @Test
@@ -198,7 +158,6 @@ class BrandServiceImplTest {
 
         assertThat(result).isFalse();
         verify(brandRepository, never()).deleteById(any());
-        verify(cacheService, never()).invalidate(any());
     }
 
     @Test
@@ -209,7 +168,6 @@ class BrandServiceImplTest {
         boolean result = brandService.deleteById(1L);
 
         assertThat(result).isFalse();
-        verify(cacheService, never()).invalidate(any());
     }
 
     @Test
@@ -233,35 +191,5 @@ class BrandServiceImplTest {
         verify(productService).getAll(argThat(filter ->
                 filter != null && filter.brandId().equals(1L)
         ));
-    }
-
-    @Test
-    void testCacheInvalidationOnSave() {
-        Brand brand = new Brand("New Brand");
-        Brand savedBrand = new Brand(1L, "New Brand");
-
-        when(brandRepository.existsByNameIgnoreCase("New Brand")).thenReturn(false);
-        when(brandRepository.save(brand)).thenReturn(savedBrand);
-
-        brandService.save(brand);
-
-        verify(cacheService).invalidate("ALL_BRANDS");
-        verify(cacheService, never()).invalidate("BRAND1");
-    }
-
-    @Test
-    void testCacheInvalidationOnUpdate() {
-        Brand existingBrand = new Brand(1L, "Old Brand");
-        Brand sourceBrand = new Brand("Updated Brand");
-        Brand updatedBrand = new Brand(1L, "Updated Brand");
-
-        when(brandRepository.getById(1L)).thenReturn(Optional.of(existingBrand));
-        when(brandRepository.existsByNameIgnoreCase("Updated Brand")).thenReturn(false);
-        when(brandRepository.update(existingBrand)).thenReturn(updatedBrand);
-
-        brandService.update(1L, sourceBrand);
-
-        verify(cacheService).invalidate("BRAND1");
-        verify(cacheService).invalidate("ALL_BRANDS");
     }
 }
