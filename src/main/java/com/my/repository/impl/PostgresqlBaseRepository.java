@@ -23,7 +23,7 @@ public abstract class PostgresqlBaseRepository {
         schema = AppConfiguration.getProperty("database.schema");
     }
 
-    protected Long getNextSequenceValue(String sequenceName) throws SQLException {
+    protected Long getNextSequenceValue(String sequenceName) {
         String sql = String.format("SELECT nextval('%s.%s')", schema, sequenceName);
         try (PreparedStatement stmt = connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             if (rs.next()) {

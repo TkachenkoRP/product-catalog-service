@@ -33,11 +33,14 @@ class CategoryServiceImplTest {
     @Mock
     private ProductService productService;
 
+    @Mock
+    private RedisCacheServiceImpl redisCacheService;
+
     private CategoryService categoryService;
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryServiceImpl(categoryRepository, productService);
+        categoryService = new CategoryServiceImpl(categoryRepository, productService, redisCacheService);
     }
 
     @Test
@@ -48,6 +51,7 @@ class CategoryServiceImplTest {
         );
 
         when(categoryRepository.getAll()).thenReturn(expectedCategories);
+        when(redisCacheService.getList(any(), any())).thenReturn(null);
 
         List<Category> result = categoryService.getAll();
 

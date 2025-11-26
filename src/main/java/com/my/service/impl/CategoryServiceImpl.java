@@ -8,8 +8,10 @@ import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.CategoryRepository;
 import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
+import com.my.service.CacheService;
 import com.my.service.CategoryService;
 import com.my.service.ProductService;
+import com.my.util.CacheKeyGenerator;
 import lombok.RequiredArgsConstructor;
 
 import java.text.MessageFormat;
@@ -20,20 +22,39 @@ public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final ProductService productService;
+    private final CacheService cacheService;
 
     public CategoryServiceImpl() {
-        this(new PostgresqlCategoryRepositoryImpl(), new ProductServiceImpl());
+        this(new PostgresqlCategoryRepositoryImpl(), new ProductServiceImpl(), new RedisCacheServiceImpl());
     }
 
     @Override
     public List<Category> getAll() {
-        return categoryRepository.getAll();
+        String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
+        List<Category> categories = cacheService.getList(cacheKey, Category.class);
+        System.out.println("Кэш:\n" + categories);
+
+        if (categories == null) {
+            categories = categoryRepository.getAll();
+            cacheService.put(cacheKey, categories);
+        }
+
+        return categories;
     }
 
     @Override
     public Category getById(Long id) {
-        return categoryRepository.getById(id).orElseThrow(
-                () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
+        String cacheKey = CacheKeyGenerator.generateCategoryKey(id);
+        Category category = cacheService.get(cacheKey, Category.class);
+        System.out.println("Кэш:\n" + category);
+
+        if (category == null) {
+            category = categoryRepository.getById(id).orElseThrow(
+                    () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
+            cacheService.put(cacheKey, category);
+        }
+
+        return category;
     }
 
     @Override
@@ -41,7 +62,9 @@ public class CategoryServiceImpl implements CategoryService {
         if (existsByName(category.getName())) {
             throw new AlreadyExistException(category.getName() + " уже существует");
         }
-        return categoryRepository.save(category);
+        Category saved = categoryRepository.save(category);
+        cacheService.invalidate(CacheKeyGenerator.generateAllCategoriesKey());
+        return saved;
     }
 
     @Override
@@ -51,7 +74,12 @@ public class CategoryServiceImpl implements CategoryService {
             throw new AlreadyExistException(sourceCategory.getName() + " уже существует");
         }
         CategoryMapper.INSTANCE.updateCategory(sourceCategory, updatedCategory);
-        return categoryRepository.update(updatedCategory);
+        Category updated = categoryRepository.update(updatedCategory);
+
+        cacheService.invalidate(CacheKeyGenerator.generateCategoryKey(id));
+        cacheService.invalidate(CacheKeyGenerator.generateAllCategoriesKey());
+
+        return updated;
     }
 
     @Override
@@ -59,7 +87,12 @@ public class CategoryServiceImpl implements CategoryService {
         if (hasProductsWithCategory(id)) {
             return false;
         }
-        return categoryRepository.deleteById(id);
+        boolean success = categoryRepository.deleteById(id);
+        if (success) {
+            cacheService.invalidate(CacheKeyGenerator.generateCategoryKey(id));
+            cacheService.invalidate(CacheKeyGenerator.generateAllCategoriesKey());
+        }
+        return success;
     }
 
     private boolean hasProductsWithCategory(Long categoryId) {

@@ -34,11 +34,14 @@ class BrandServiceImplTest {
     @Mock
     private ProductService productService;
 
+    @Mock
+    private RedisCacheServiceImpl redisCacheService;
+
     private BrandService brandService;
 
     @BeforeEach
     void setUp() {
-        brandService = new BrandServiceImpl(brandRepository, productService);
+        brandService = new BrandServiceImpl(brandRepository, productService, redisCacheService);
     }
 
     @Test
@@ -49,6 +52,7 @@ class BrandServiceImplTest {
         );
 
         when(brandRepository.getAll()).thenReturn(expectedBrands);
+        when(redisCacheService.getList(any(), any())).thenReturn(null);
 
         List<Brand> result = brandService.getAll();
 

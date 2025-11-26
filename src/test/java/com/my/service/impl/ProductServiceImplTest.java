@@ -16,8 +16,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -25,11 +23,14 @@ class ProductServiceImplTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private RedisCacheServiceImpl redisCacheService;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
-        productService = new ProductServiceImpl(productRepository);
+        productService = new ProductServiceImpl(productRepository, redisCacheService);
     }
 
     @Test
@@ -40,6 +41,7 @@ class ProductServiceImplTest {
         );
 
         when(productRepository.getAll(null)).thenReturn(expectedProducts);
+        when(redisCacheService.getList(any(), any())).thenReturn(null);
 
         List<Product> result = productService.getAll(null);
 

@@ -27,6 +27,7 @@
         <aspectj.version>1.9.24</aspectj.version>
         <slf4j.version>2.0.17</slf4j.version>
         <aspectj.version>1.9.24</aspectj.version>
+        <redis.version>7.1.0</redis.version>
     </properties>
 
     <dependencies>
@@ -94,6 +95,11 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${redis.version}</version>
         </dependency>
 
         <dependency>
