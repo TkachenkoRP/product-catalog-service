@@ -13,6 +13,15 @@ import java.util.Optional;
 
 public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository implements BrandRepository {
 
+    private static final String BRAND_SEQUENCE = "brand_seq";
+
+    private static final String SELECT_ALL_SQL = "SELECT id, name FROM %s.brand ORDER BY id";
+    private static final String SELECT_BY_ID_SQL = "SELECT id, name FROM %s.brand WHERE id = ?";
+    private static final String INSERT_SQL = "INSERT INTO %s.brand (id, name) VALUES (?, ?)";
+    private static final String UPDATE_SQL = "UPDATE %s.brand SET name = ? WHERE id = ?";
+    private static final String DELETE_SQL = "DELETE FROM %s.brand WHERE id = ?";
+    private static final String EXISTS_BY_NAME_SQL = "SELECT COUNT(*) FROM %s.brand WHERE LOWER(name) = LOWER(?)";
+
     public PostgresqlBrandRepositoryImpl() {
         super();
     }
@@ -24,7 +33,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     @Override
     public List<Brand> getAll() {
         List<Brand> brands = new ArrayList<>();
-        String sql = String.format("SELECT id, name FROM %s.brand ORDER BY id", schema);
+        String sql = String.format(SELECT_ALL_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -40,7 +49,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
 
     @Override
     public Optional<Brand> getById(Long id) {
-        String sql = String.format("SELECT id, name FROM %s.brand WHERE id = ?", schema);
+        String sql = String.format(SELECT_BY_ID_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -65,10 +74,10 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     }
 
     private Brand insert(Brand brand) {
-        String sql = String.format("INSERT INTO %s.brand (id, name) VALUES (?, ?)", schema);
+        String sql = String.format(INSERT_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(Sequences.BRAND.getSequenceName());
+            Long id = getNextSequenceValue(BRAND_SEQUENCE);
             stmt.setLong(1, id);
             stmt.setString(2, brand.getName());
 
@@ -83,7 +92,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
 
     @Override
     public Brand update(Brand brand) {
-        String sql = String.format("UPDATE %s.brand SET name = ? WHERE id = ?", schema);
+        String sql = String.format(UPDATE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, brand.getName());
@@ -101,7 +110,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
 
     @Override
     public boolean deleteById(Long id) {
-        String sql = String.format("DELETE FROM %s.brand WHERE id = ?", schema);
+        String sql = String.format(DELETE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -113,7 +122,7 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
 
     @Override
     public boolean existsByNameIgnoreCase(String brandName) {
-        String sql = String.format("SELECT COUNT(*) FROM %s.brand WHERE LOWER(name) = LOWER(?)", schema);
+        String sql = String.format(EXISTS_BY_NAME_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
 

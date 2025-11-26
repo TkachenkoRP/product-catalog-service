@@ -13,6 +13,15 @@ import java.util.Optional;
 
 public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository implements CategoryRepository {
 
+    private static final String CATEGORY_SEQUENCE = "category_seq";
+
+    private static final String SELECT_ALL_SQL = "SELECT id, name FROM %s.category ORDER BY id";
+    private static final String SELECT_BY_ID_SQL = "SELECT id, name FROM %s.category WHERE id = ?";
+    private static final String INSERT_SQL = "INSERT INTO %s.category (id, name) VALUES (?, ?)";
+    private static final String UPDATE_SQL = "UPDATE %s.category SET name = ? WHERE id = ?";
+    private static final String DELETE_SQL = "DELETE FROM %s.category WHERE id = ?";
+    private static final String EXISTS_BY_NAME_SQL = "SELECT COUNT(*) FROM %s.category WHERE LOWER(name) = LOWER(?)";
+
     public PostgresqlCategoryRepositoryImpl() {
         super();
     }
@@ -24,7 +33,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     @Override
     public List<Category> getAll() {
         List<Category> categories = new ArrayList<>();
-        String sql = String.format("SELECT id, name FROM %s.category ORDER BY id", schema);
+        String sql = String.format(SELECT_ALL_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -40,7 +49,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
 
     @Override
     public Optional<Category> getById(Long id) {
-        String sql = String.format("SELECT id, name FROM %s.category WHERE id = ?", schema);
+        String sql = String.format(SELECT_BY_ID_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -65,10 +74,10 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     }
 
     private Category insert(Category category) {
-        String sql = String.format("INSERT INTO %s.category (id, name) VALUES (?, ?)", schema);
+        String sql = String.format(INSERT_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(Sequences.CATEGORY.getSequenceName());
+            Long id = getNextSequenceValue(CATEGORY_SEQUENCE);
             stmt.setLong(1, id);
             stmt.setString(2, category.getName());
             stmt.executeUpdate();
@@ -81,7 +90,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
 
     @Override
     public Category update(Category category) {
-        String sql = String.format("UPDATE %s.category SET name = ? WHERE id = ?", schema);
+        String sql = String.format(UPDATE_SQL, schema);
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, category.getName());
             stmt.setLong(2, category.getId());
@@ -98,7 +107,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
 
     @Override
     public boolean deleteById(Long id) {
-        String sql = String.format("DELETE FROM %s.category WHERE id = ?", schema);
+        String sql = String.format(DELETE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -110,7 +119,7 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
 
     @Override
     public boolean existsByNameIgnoreCase(String categoryName) {
-        String sql = String.format("SELECT COUNT(*) FROM %s.category WHERE LOWER(name) = LOWER(?)", schema);
+        String sql = String.format(EXISTS_BY_NAME_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, categoryName);

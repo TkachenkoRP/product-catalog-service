@@ -5,14 +5,8 @@ import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
 import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
 import com.my.repository.impl.PostgresqlProductRepositoryImpl;
 import com.my.repository.impl.PostgresqlUserRepositoryImpl;
-import com.my.util.DBUtil;
-import liquibase.Contexts;
-import liquibase.Liquibase;
-import liquibase.database.Database;
-import liquibase.database.DatabaseFactory;
-import liquibase.database.jvm.JdbcConnection;
-import liquibase.exception.LiquibaseException;
-import liquibase.resource.ClassLoaderResourceAccessor;
+import com.my.util.ConnectionProviderFactory;
+import com.my.util.LiquibaseManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,6 +31,7 @@ public abstract class AbstractPostgresqlRepositoryTest {
     protected static Connection testConnection;
 
     protected static final String TEST_SCHEMA = AppConfiguration.getProperty("database.schema");
+    protected static final String TEST_CONTEXT = "test";
 
     protected static UserRepository userRepository;
     protected static CategoryRepository categoryRepository;
@@ -44,22 +39,19 @@ public abstract class AbstractPostgresqlRepositoryTest {
     protected static ProductRepository productRepository;
 
     @BeforeAll
-    static void setUp() throws SQLException, LiquibaseException {
+    static void setUp() throws SQLException {
         String jdbcUrl = postgresContainer.getJdbcUrl();
         String username = postgresContainer.getUsername();
         String password = postgresContainer.getPassword();
 
-        testConnection = DBUtil.getConnection(jdbcUrl, username, password, TEST_SCHEMA);
+        testConnection = ConnectionProviderFactory.getDefaultProvider()
+                .getConnection(jdbcUrl, username, password, TEST_SCHEMA);
 
         try (Statement statement = testConnection.createStatement()) {
             statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS %s;".formatted(TEST_SCHEMA));
         }
 
-        Contexts contexts = new Contexts("test");
-        String changelogFile = AppConfiguration.getProperty("liquibase.change-log");
-        Database database = DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(testConnection));
-        Liquibase liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), database);
-        liquibase.update(contexts);
+        LiquibaseManager.updateDatabase(testConnection, TEST_CONTEXT);
 
         userRepository = new PostgresqlUserRepositoryImpl(testConnection);
         categoryRepository = new PostgresqlCategoryRepositoryImpl(testConnection);

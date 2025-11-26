@@ -1,8 +1,8 @@
 package com.my.repository.impl;
 
 import com.my.configuration.AppConfiguration;
-import com.my.util.DBUtil;
-import lombok.Getter;
+import com.my.exception.DataAccessException;
+import com.my.util.ConnectionProviderFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +15,7 @@ public abstract class PostgresqlBaseRepository {
     protected final String schema;
 
     protected PostgresqlBaseRepository() {
-        this(DBUtil.getConnection());
+        this(ConnectionProviderFactory.getDefaultProvider().getConnection());
     }
 
     protected PostgresqlBaseRepository(Connection connection) {
@@ -29,21 +29,9 @@ public abstract class PostgresqlBaseRepository {
             if (rs.next()) {
                 return rs.getLong(1);
             }
-            throw new SQLException("Failed to get next sequence value for: " + sequenceName);
-        }
-    }
-
-    @Getter
-    protected enum Sequences {
-        BRAND("brand_seq"),
-        CATEGORY("category_seq"),
-        PRODUCT("product_seq"),
-        USER("user_seq");
-
-        private final String sequenceName;
-
-        Sequences(String sequenceName) {
-            this.sequenceName = sequenceName;
+            throw new DataAccessException("Sequence returned no value for: " + sequenceName);
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to get next sequence value for: " + sequenceName, e);
         }
     }
 }

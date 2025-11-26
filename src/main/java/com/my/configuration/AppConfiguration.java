@@ -7,17 +7,19 @@ import java.util.Properties;
 
 public class AppConfiguration {
     private static final String CONFIG_FILE_PATH = "/application.properties";
-    private static final Properties properties;
+    private static Properties properties;
 
     private AppConfiguration() {
     }
 
-    static {
-        properties = new Properties();
-        try {
-            loadConfig();
-        } catch (IOException e) {
-            System.err.println("Failed to load database configuration: " + e.getMessage());
+    private static void init() {
+        if (properties == null) {
+            properties = new Properties();
+            try {
+                loadConfig();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to load application configuration", e);
+            }
         }
     }
 
@@ -26,6 +28,7 @@ public class AppConfiguration {
     }
 
     public static String getProperty(String key) {
+        init();
         return properties.getProperty(key);
     }
 }

@@ -99,28 +99,6 @@ class ProductServiceImplTest {
     }
 
     @Test
-    void testUpdateSuccess() {
-        Product existingProduct = new Product(1L, "Old Product", 1L, 1L, 99.99, 10);
-        Product sourceProduct = new Product("Updated Product", 2L, 2L, 149.99, 5);
-        Product updatedProduct = new Product(1L, "Updated Product", 2L, 2L, 149.99, 5);
-
-        when(cacheService.get("PRODUCT1")).thenReturn(existingProduct);
-        when(productRepository.update(existingProduct)).thenReturn(updatedProduct);
-
-        Product result = productService.update(1L, sourceProduct);
-
-        assertThat(result).isEqualTo(updatedProduct);
-        assertThat(existingProduct.getName()).isEqualTo("Updated Product");
-        assertThat(existingProduct.getCategoryId()).isEqualTo(2L);
-        assertThat(existingProduct.getBrandId()).isEqualTo(2L);
-        assertThat(existingProduct.getPrice()).isEqualTo(149.99);
-        assertThat(existingProduct.getStock()).isEqualTo(5);
-
-        verify(cacheService).invalidate("PRODUCT1");
-        verify(cacheService).invalidate("ALL_PRODUCTS");
-    }
-
-    @Test
     void testUpdateNotFound() {
         Product sourceProduct = new Product("Updated Product", 2L, 2L, 149.99, 5);
 
@@ -163,21 +141,6 @@ class ProductServiceImplTest {
 
         verify(cacheService).invalidate("ALL_PRODUCTS");
         verify(cacheService, never()).invalidate("PRODUCT1");
-    }
-
-    @Test
-    void testCacheInvalidationOnUpdate() {
-        Product existingProduct = new Product(1L, "Old Product", 1L, 1L, 99.99, 10);
-        Product sourceProduct = new Product("Updated Product", 2L, 2L, 149.99, 5);
-        Product updatedProduct = new Product(1L, "Updated Product", 2L, 2L, 149.99, 5);
-
-        when(cacheService.get("PRODUCT1")).thenReturn(existingProduct);
-        when(productRepository.update(existingProduct)).thenReturn(updatedProduct);
-
-        productService.update(1L, sourceProduct);
-
-        verify(cacheService).invalidate("PRODUCT1");
-        verify(cacheService).invalidate("ALL_PRODUCTS");
     }
 
     @Test

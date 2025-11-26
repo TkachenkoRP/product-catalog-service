@@ -14,6 +14,16 @@ import java.util.Optional;
 
 public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository implements UserRepository {
 
+    private static final String USER_SEQUENCE = "user_seq";
+
+    private static final String SELECT_ALL_SQL = "SELECT id, email, username, password, role FROM %s.user";
+    private static final String SELECT_BY_ID_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE id = ?";
+    private static final String INSERT_SQL = "INSERT INTO %s.user (id, email, username, password, role) VALUES (?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE %s.user SET email = ?, username = ?, password = ?, role = ? WHERE id = ?";
+    private static final String DELETE_SQL = "DELETE FROM %s.user WHERE id = ?";
+    private static final String EXISTS_BY_EMAIL_SQL = "SELECT COUNT(*) FROM %s.user WHERE email = ?";
+    private static final String SELECT_BY_EMAIL_PASSWORD_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE email = ? AND password = ?";
+
     public PostgresqlUserRepositoryImpl() {
         super();
     }
@@ -25,7 +35,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
     @Override
     public List<User> getAll() {
         List<User> users = new ArrayList<>();
-        String sql = String.format("SELECT id, email, username, password, role FROM %s.user", schema);
+        String sql = String.format(SELECT_ALL_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -40,7 +50,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
 
     @Override
     public Optional<User> getById(Long id) {
-        String sql = String.format("SELECT id, email, username, password, role FROM %s.user WHERE id = ?", schema);
+        String sql = String.format(SELECT_BY_ID_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -65,10 +75,10 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
     }
 
     private User insert(User user) {
-        String sql = String.format("INSERT INTO %s.user (id, email, username, password, role) VALUES (?, ?, ?, ?, ?)", schema);
+        String sql = String.format(INSERT_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(Sequences.USER.getSequenceName());
+            Long id = getNextSequenceValue(USER_SEQUENCE);
             stmt.setLong(1, id);
             stmt.setString(2, user.getEmail());
             stmt.setString(3, user.getUsername());
@@ -84,7 +94,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
 
     @Override
     public User update(User user) {
-        String sql = String.format("UPDATE %s.user SET email = ?, username = ?, password = ?, role = ? WHERE id = ?", schema);
+        String sql = String.format(UPDATE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, user.getEmail());
@@ -104,7 +114,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
 
     @Override
     public boolean deleteById(Long id) {
-        String sql = String.format("DELETE FROM %s.user WHERE id = ?", schema);
+        String sql = String.format(DELETE_SQL, schema);
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
             return stmt.executeUpdate() > 0;
@@ -115,7 +125,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
 
     @Override
     public boolean isPresentByEmail(String email) {
-        String sql = String.format("SELECT COUNT(*) FROM %s.user WHERE email = ?", schema);
+        String sql = String.format(EXISTS_BY_EMAIL_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, email);
@@ -132,7 +142,7 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
 
     @Override
     public Optional<User> getByEmailAndPassword(String email, String password) {
-        String sql = String.format("SELECT id, email, username, password, role FROM %s.user WHERE email = ? AND password = ?", schema);
+        String sql = String.format(SELECT_BY_EMAIL_PASSWORD_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, email);

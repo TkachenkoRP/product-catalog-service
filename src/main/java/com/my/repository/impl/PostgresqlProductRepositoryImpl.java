@@ -14,6 +14,23 @@ import java.util.Optional;
 
 public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository implements ProductRepository {
 
+    private static final String PRODUCT_SEQUENCE = "product_seq";
+
+    private static final String SELECT_ALL_BASE_SQL = "SELECT id, name, category_id, brand_id, price, stock FROM %s.product";
+    private static final String SELECT_BY_ID_SQL = "SELECT id, name, category_id, brand_id, price, stock FROM %s.product WHERE id = ?";
+    private static final String INSERT_SQL = "INSERT INTO %s.product (id, name, category_id, brand_id, price, stock) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String UPDATE_SQL = "UPDATE %s.product SET name = ?, category_id = ?, brand_id = ?, price = ?, stock = ? WHERE id = ?";
+    private static final String DELETE_SQL = "DELETE FROM %s.product WHERE id = ?";
+
+    private static final String CATEGORY_ID_CONDITION = "category_id = ?";
+    private static final String BRAND_ID_CONDITION = "brand_id = ?";
+    private static final String PRICE_MIN_CONDITION = "price >= ?";
+    private static final String PRICE_MAX_CONDITION = "price < ?";
+    private static final String STOCK_MIN_CONDITION = "stock >= ?";
+    private static final String WHERE_CLAUSE = " WHERE ";
+    private static final String AND_JOIN = " AND ";
+    private static final String ORDER_BY_ID = " ORDER BY id";
+
     public PostgresqlProductRepositoryImpl() {
         super();
     }
@@ -26,40 +43,40 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     public List<Product> getAll(ProductFilter filter) {
         List<Product> products = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product", schema));
+                String.format(SELECT_ALL_BASE_SQL, schema));
 
         List<Object> parameters = new ArrayList<>();
         List<String> conditions = new ArrayList<>();
 
         if (filter != null) {
             if (filter.categoryId() != null) {
-                conditions.add("category_id = ?");
+                conditions.add(CATEGORY_ID_CONDITION);
                 parameters.add(filter.categoryId());
             }
             if (filter.brandId() != null) {
-                conditions.add("brand_id = ?");
+                conditions.add(BRAND_ID_CONDITION);
                 parameters.add(filter.brandId());
             }
             if (filter.minPrice() != null) {
-                conditions.add("price >= ?");
+                conditions.add(PRICE_MIN_CONDITION);
                 parameters.add(filter.minPrice());
             }
             if (filter.maxPrice() != null) {
-                conditions.add("price < ?");
+                conditions.add(PRICE_MAX_CONDITION);
                 parameters.add(filter.maxPrice());
             }
             if (filter.minStock() != null) {
-                conditions.add("stock >= ?");
+                conditions.add(STOCK_MIN_CONDITION);
                 parameters.add(filter.minStock());
             }
         }
 
         if (!conditions.isEmpty()) {
-            sql.append(" WHERE ");
-            sql.append(String.join(" AND ", conditions));
+            sql.append(WHERE_CLAUSE);
+            sql.append(String.join(AND_JOIN, conditions));
         }
 
-        sql.append(" ORDER BY id");
+        sql.append(ORDER_BY_ID);
 
         try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             for (int i = 0; i < parameters.size(); i++) {
@@ -79,7 +96,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
 
     @Override
     public Optional<Product> getById(Long id) {
-        String sql = String.format("SELECT id, name, category_id, brand_id, price, stock FROM %s.product WHERE id = ?", schema);
+        String sql = String.format(SELECT_BY_ID_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
@@ -104,10 +121,10 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     }
 
     private Product insert(Product product) {
-        String sql = String.format("INSERT INTO %s.product (id, name, category_id, brand_id, price, stock) VALUES (?, ?, ?, ?, ?, ?)", schema);
+        String sql = String.format(INSERT_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(Sequences.PRODUCT.getSequenceName());
+            Long id = getNextSequenceValue(PRODUCT_SEQUENCE);
             stmt.setLong(1, id);
             stmt.setString(2, product.getName());
             stmt.setLong(3, product.getCategoryId());
@@ -124,7 +141,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
 
     @Override
     public Product update(Product product) {
-        String sql = String.format("UPDATE %s.product SET name = ?, category_id = ?, brand_id = ?, price = ?, stock = ? WHERE id = ?", schema);
+        String sql = String.format(UPDATE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, product.getName());
@@ -146,7 +163,7 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
 
     @Override
     public boolean deleteById(Long id) {
-        String sql = String.format("DELETE FROM %s.product WHERE id = ?", schema);
+        String sql = String.format(DELETE_SQL, schema);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setLong(1, id);
