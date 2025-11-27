@@ -14,11 +14,13 @@
 * JDBC
 * PostgreSQL
 * Liquibase
+* JDBC
 * Jackson
 * AssertJ
 * JUnit 5
 * Mockito
 * Testcontainers
+* Кеширование Redis
 
 ## Функциональность
 
