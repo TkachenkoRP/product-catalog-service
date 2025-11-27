@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.model.Category;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
+import com.my.repository.CategoryRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,6 +11,12 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
+    private final CategoryRepository categoryRepository;
+
+    PostgresqlCategoryRepositoryImplTest(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
+
     @Test
     void whenGetAllCategories_thenReturnAllCategories() {
         List<Category> categories = categoryRepository.getAll();

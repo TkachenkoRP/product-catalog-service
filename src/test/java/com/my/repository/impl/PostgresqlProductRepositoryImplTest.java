@@ -4,6 +4,9 @@ import com.my.model.Brand;
 import com.my.model.Category;
 import com.my.model.Product;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
+import com.my.repository.BrandRepository;
+import com.my.repository.CategoryRepository;
+import com.my.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -12,6 +15,16 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
+
+    private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
+    private final BrandRepository brandRepository;
+
+    PostgresqlProductRepositoryImplTest(ProductRepository productRepository, CategoryRepository categoryRepository, BrandRepository brandRepository) {
+        this.productRepository = productRepository;
+        this.categoryRepository = categoryRepository;
+        this.brandRepository = brandRepository;
+    }
 
     @Test
     void whenGetAllProducts_thenReturnAllProducts() {

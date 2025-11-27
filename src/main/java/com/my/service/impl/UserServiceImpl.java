@@ -5,23 +5,21 @@ import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
-import com.my.repository.impl.PostgresqlUserRepositoryImpl;
 import com.my.security.UserManager;
 import com.my.service.UserService;
 import com.my.model.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
 import java.util.List;
 
+@Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-
-    public UserServiceImpl() {
-        this(new PostgresqlUserRepositoryImpl());
-    }
+    private final UserMapper userMapper;
 
     @Override
     public User registration(String email, String password, String name) {
@@ -62,7 +60,7 @@ public class UserServiceImpl implements UserService {
         if (!updatedUser.getEmail().equals(sourceUser.getEmail()) && !isEmailAvailable(sourceUser.getEmail())) {
             throw new AlreadyExistException(MessageFormat.format("{0} уже используется", sourceUser.getEmail()));
         }
-        UserMapper.INSTANCE.updateUser(sourceUser, updatedUser);
+        userMapper.updateUser(sourceUser, updatedUser);
         return userRepository.update(updatedUser);
     }
 

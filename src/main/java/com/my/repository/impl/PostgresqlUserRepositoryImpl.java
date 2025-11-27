@@ -3,16 +3,33 @@ package com.my.repository.impl;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
+import com.my.util.SequenceGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository implements UserRepository {
+@Repository
+public class PostgresqlUserRepositoryImpl implements UserRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final SequenceGenerator sequenceGenerator;
+
+    @Value("${datasource.schema}")
+    private String schema;
+
+    @Autowired
+    public PostgresqlUserRepositoryImpl(DataSource dataSource, SequenceGenerator sequenceGenerator) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sequenceGenerator = sequenceGenerator;
+    }
 
     private static final String USER_SEQUENCE = "user_seq";
 
@@ -24,138 +41,74 @@ public class PostgresqlUserRepositoryImpl extends PostgresqlBaseRepository imple
     private static final String EXISTS_BY_EMAIL_SQL = "SELECT COUNT(*) FROM %s.user WHERE email = ?";
     private static final String SELECT_BY_EMAIL_PASSWORD_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE email = ? AND password = ?";
 
-    public PostgresqlUserRepositoryImpl() {
-        super();
-    }
-
-    public PostgresqlUserRepositoryImpl(Connection connection) {
-        super(connection);
-    }
-
     @Override
     public List<User> getAll() {
-        List<User> users = new ArrayList<>();
         String sql = String.format(SELECT_ALL_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                users.add(mapResultSetToUser(rs));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения всех пользователей", e);
-        }
-        return users;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToUser(rs));
     }
 
     @Override
     public Optional<User> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToUser(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения пользователя по ID: " + id, e);
+        try {
+            User user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToUser(rs), id);
+            return Optional.ofNullable(user);
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override
     public User save(User user) {
-        if (user.getId() == null) {
-            return insert(user);
-        } else {
-            return update(user);
-        }
-    }
-
-    private User insert(User user) {
         String sql = String.format(INSERT_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(USER_SEQUENCE);
-            stmt.setLong(1, id);
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getUsername());
-            stmt.setString(4, user.getPassword());
-            stmt.setString(5, user.getRole().name());
-            stmt.executeUpdate();
-            user.setId(id);
-            return user;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка добавления пользователя", e);
-        }
+        Long nextSequenceValue = sequenceGenerator.getNextSequenceValue(USER_SEQUENCE);
+        jdbcTemplate.update(sql,
+                nextSequenceValue,
+                user.getEmail(),
+                user.getUsername(),
+                user.getPassword(),
+                user.getRole().name()
+        );
+        user.setId(nextSequenceValue);
+        return user;
     }
 
     @Override
     public User update(User user) {
         String sql = String.format(UPDATE_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, user.getEmail());
-            stmt.setString(2, user.getUsername());
-            stmt.setString(3, user.getPassword());
-            stmt.setString(4, user.getRole().name());
-            stmt.setLong(5, user.getId());
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка поиска пользователя по ID: " + user.getId());
-            }
-            return user;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка обновления пользователя", e);
-        }
+        jdbcTemplate.update(sql,
+                user.getEmail(),
+                user.getUsername(),
+                user.getPassword(),
+                user.getRole().name(),
+                user.getId()
+        );
+        return user;
     }
 
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка удаления пользователя с ID: " + id, e);
-        }
+        int update = jdbcTemplate.update(sql, id);
+        return update > 0;
     }
 
     @Override
     public boolean isPresentByEmail(String email) {
         String sql = String.format(EXISTS_BY_EMAIL_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, email);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка проверки доступности email", e);
-        }
-        return false;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, email);
+        return count != null && count > 0;
     }
 
     @Override
     public Optional<User> getByEmailAndPassword(String email, String password) {
         String sql = String.format(SELECT_BY_EMAIL_PASSWORD_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, email);
-            stmt.setString(2, password);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToUser(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения пользователя по email и паролю", e);
+        try {
+            User user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToUser(rs), email, password);
+            return Optional.ofNullable(user);
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {

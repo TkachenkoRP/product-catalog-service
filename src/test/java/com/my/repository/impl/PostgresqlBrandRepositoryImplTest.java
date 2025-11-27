@@ -2,6 +2,7 @@ package com.my.repository.impl;
 
 import com.my.model.Brand;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
+import com.my.repository.BrandRepository;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -10,6 +11,13 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
+
+    private final BrandRepository brandRepository;
+
+    PostgresqlBrandRepositoryImplTest(BrandRepository brandRepository) {
+        this.brandRepository = brandRepository;
+    }
+
     @Test
     void whenGetAllBrands_thenReturnAllBrands() {
         List<Brand> brands = brandRepository.getAll();

@@ -4,6 +4,7 @@ import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,6 +12,12 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
+    private final PostgresqlUserRepositoryImpl userRepository;
+
+    @Autowired
+    public PostgresqlUserRepositoryImplTest(PostgresqlUserRepositoryImpl userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Test
     void whenGetAllUsers_thenReturnAllUsers() {
@@ -169,7 +176,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
         try {
             userRepository.save(user2);
         } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка добавления пользователя");
+            assertThat(e).hasMessageContaining("user_email_key");
         }
     }
 }

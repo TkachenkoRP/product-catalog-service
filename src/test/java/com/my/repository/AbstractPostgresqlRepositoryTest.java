@@ -1,77 +1,55 @@
 package com.my.repository;
 
-import com.my.configuration.AppConfiguration;
-import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
-import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
-import com.my.repository.impl.PostgresqlProductRepositoryImpl;
-import com.my.repository.impl.PostgresqlUserRepositoryImpl;
-import com.my.util.ConnectionProviderFactory;
-import com.my.util.LiquibaseManager;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.my.configuration.ApplicationConfig;
 import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
-
 @Testcontainers
+@WebAppConfiguration
+@ExtendWith(SpringExtension.class)
+@ContextConfiguration(classes = ApplicationConfig.class)
+@Transactional
+@Rollback
 public abstract class AbstractPostgresqlRepositoryTest {
 
     @Container
     protected static final PostgreSQLContainer<?> postgresContainer =
             new PostgreSQLContainer<>("postgres:17.4")
+                    .withInitScript("init.sql")
                     .waitingFor(Wait.forListeningPort());
 
-    protected static Connection testConnection;
+    public static ObjectMapper objectMapper;
 
-    protected static final String TEST_SCHEMA = AppConfiguration.getProperty("database.schema");
-    protected static final String TEST_CONTEXT = "test";
-
-    protected static UserRepository userRepository;
-    protected static CategoryRepository categoryRepository;
-    protected static BrandRepository brandRepository;
-    protected static ProductRepository productRepository;
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("datasource.url", postgresContainer::getJdbcUrl);
+        registry.add("datasource.username", postgresContainer::getUsername);
+        registry.add("datasource.password", postgresContainer::getPassword);
+        registry.add("liquibase.contexts", () -> "test");
+    }
 
     @BeforeAll
-    static void setUp() throws SQLException {
-        String jdbcUrl = postgresContainer.getJdbcUrl();
-        String username = postgresContainer.getUsername();
-        String password = postgresContainer.getPassword();
-
-        testConnection = ConnectionProviderFactory.getDefaultProvider()
-                .getConnection(jdbcUrl, username, password, TEST_SCHEMA);
-
-        try (Statement statement = testConnection.createStatement()) {
-            statement.executeUpdate("CREATE SCHEMA IF NOT EXISTS %s;".formatted(TEST_SCHEMA));
-        }
-
-        LiquibaseManager.updateDatabase(testConnection, TEST_CONTEXT);
-
-        userRepository = new PostgresqlUserRepositoryImpl(testConnection);
-        categoryRepository = new PostgresqlCategoryRepositoryImpl(testConnection);
-        brandRepository = new PostgresqlBrandRepositoryImpl(testConnection);
-        productRepository = new PostgresqlProductRepositoryImpl(testConnection);
-    }
-
-    @BeforeEach
-    void setUpTransaction() throws SQLException {
-        testConnection.setAutoCommit(false);
-    }
-
-    @AfterEach
-    void tearDownTransaction() throws SQLException {
-        testConnection.rollback();
+    static void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
     @AfterAll
-    static void tearDown() throws SQLException {
-        testConnection.close();
+    static void tearDown() {
         postgresContainer.stop();
     }
 }
