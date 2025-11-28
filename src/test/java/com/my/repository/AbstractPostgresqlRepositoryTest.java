@@ -3,9 +3,9 @@ package com.my.repository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.my.configuration.ApplicationConfig;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -24,6 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ContextConfiguration(classes = ApplicationConfig.class)
 @Transactional
 @Rollback
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class AbstractPostgresqlRepositoryTest {
 
     @Container
@@ -46,10 +47,5 @@ public abstract class AbstractPostgresqlRepositoryTest {
     static void setUp() {
         objectMapper = new ObjectMapper();
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    }
-
-    @AfterAll
-    static void tearDown() {
-        postgresContainer.stop();
     }
 }

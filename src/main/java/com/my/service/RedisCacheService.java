@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.configuration.AppConfiguration;
 import com.my.configuration.JacksonConfig;
 import com.my.configuration.RedisConfig;
+import org.springframework.stereotype.Service;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+@Service
 public class RedisCacheService {
     private final JedisPool jedisPool;
     private final ObjectMapper objectMapper;

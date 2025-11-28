@@ -1,5 +1,6 @@
 package com.my.repository.impl;
 
+import com.my.exception.ProductCreationException;
 import com.my.model.Brand;
 import com.my.model.Category;
 import com.my.model.Product;
@@ -8,6 +9,7 @@ import com.my.repository.BrandRepository;
 import com.my.repository.CategoryRepository;
 import com.my.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +22,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
 
+    @Autowired
     PostgresqlProductRepositoryImplTest(ProductRepository productRepository, CategoryRepository categoryRepository, BrandRepository brandRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
@@ -195,7 +198,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
         try {
             productRepository.save(invalidProduct);
-        } catch (RuntimeException e) {
+        } catch (ProductCreationException e) {
             assertThat(e).hasMessageContaining("Ошибка добавления продукта");
         }
     }

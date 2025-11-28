@@ -2,13 +2,16 @@ package com.my.mapper;
 
 import com.my.model.Brand;
 import com.my.service.BrandService;
-import com.my.service.impl.BrandServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+@Service
 public class BrandMap {
     private final BrandService brandService;
 
-    public BrandMap() {
-        this.brandService = new BrandServiceImpl();
+    @Autowired
+    public BrandMap(BrandService brandService) {
+        this.brandService = brandService;
     }
 
     public Brand fromId(Long id) {

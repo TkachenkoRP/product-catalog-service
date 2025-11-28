@@ -2,16 +2,33 @@ package com.my.repository.impl;
 
 import com.my.model.Brand;
 import com.my.repository.BrandRepository;
+import com.my.util.SequenceGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository implements BrandRepository {
+@Repository
+public class PostgresqlBrandRepositoryImpl implements BrandRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final SequenceGenerator sequenceGenerator;
+
+    @Value("${datasource.schema}")
+    private String schema;
+
+    @Autowired
+    public PostgresqlBrandRepositoryImpl(DataSource dataSource, SequenceGenerator sequenceGenerator) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sequenceGenerator = sequenceGenerator;
+    }
 
     private static final String BRAND_SEQUENCE = "brand_seq";
 
@@ -22,120 +39,63 @@ public class PostgresqlBrandRepositoryImpl extends PostgresqlBaseRepository impl
     private static final String DELETE_SQL = "DELETE FROM %s.brand WHERE id = ?";
     private static final String EXISTS_BY_NAME_SQL = "SELECT COUNT(*) FROM %s.brand WHERE LOWER(name) = LOWER(?)";
 
-    public PostgresqlBrandRepositoryImpl() {
+    public PostgresqlBrandRepositoryImpl(JdbcTemplate jdbcTemplate, SequenceGenerator sequenceGenerator) {
         super();
-    }
-
-    public PostgresqlBrandRepositoryImpl(Connection connection) {
-        super(connection);
+        this.jdbcTemplate = jdbcTemplate;
+        this.sequenceGenerator = sequenceGenerator;
     }
 
     @Override
     public List<Brand> getAll() {
-        List<Brand> brands = new ArrayList<>();
         String sql = String.format(SELECT_ALL_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                brands.add(mapResultSetToBrand(rs));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка загрузки брендов", e);
-        }
-        return brands;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToBrand(rs));
     }
 
     @Override
     public Optional<Brand> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToBrand(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка загрузки бренда с id: " + id, e);
+        try {
+            Brand brand = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToBrand(rs), id);
+            return Optional.ofNullable(brand);
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override
     public Brand save(Brand brand) {
-        if (brand.getId() == null) {
-            return insert(brand);
-        } else {
-            return update(brand);
-        }
-    }
-
-    private Brand insert(Brand brand) {
         String sql = String.format(INSERT_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(BRAND_SEQUENCE);
-            stmt.setLong(1, id);
-            stmt.setString(2, brand.getName());
-
-            stmt.executeUpdate();
-            brand.setId(id);
-            return brand;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка добавления бренда", e);
-        }
+        Long nextSequenceValue = sequenceGenerator.getNextSequenceValue(BRAND_SEQUENCE);
+        jdbcTemplate.update(sql,
+                nextSequenceValue,
+                brand.getName()
+        );
+        brand.setId(nextSequenceValue);
+        return brand;
     }
 
     @Override
     public Brand update(Brand brand) {
         String sql = String.format(UPDATE_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, brand.getName());
-            stmt.setLong(2, brand.getId());
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка обновления бренда с ID: " + brand.getId());
-            }
-            return brand;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка обновления бренда", e);
-        }
+        jdbcTemplate.update(sql,
+                brand.getName(),
+                brand.getId()
+        );
+        return brand;
     }
 
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка уделения бренда с ID: " + id, e);
-        }
+        int update = jdbcTemplate.update(sql, id);
+        return update > 0;
     }
 
     @Override
     public boolean existsByNameIgnoreCase(String brandName) {
         String sql = String.format(EXISTS_BY_NAME_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-
-            stmt.setString(1, brandName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка проверки доступности имени бренда", e);
-        }
-        return false;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, brandName);
+        return count != null && count > 0;
     }
 
     private Brand mapResultSetToBrand(ResultSet rs) throws SQLException {

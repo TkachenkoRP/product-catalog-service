@@ -2,20 +2,16 @@ package com.my.service.impl;
 
 import com.my.service.CacheService;
 import com.my.service.RedisCacheService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Service
+@RequiredArgsConstructor
 public class RedisCacheServiceImpl implements CacheService {
 
     private final RedisCacheService redisCacheService;
-
-    public RedisCacheServiceImpl() {
-        this(new RedisCacheService());
-    }
-
-    public RedisCacheServiceImpl(RedisCacheService redisCacheService) {
-        this.redisCacheService = redisCacheService;
-    }
 
     @Override
     public void put(String key, Object value) {

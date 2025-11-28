@@ -1,0 +1,93 @@
+package com.my.controller;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Map;
+
+import static org.springframework.http.HttpMethod.DELETE;
+import static org.springframework.http.HttpMethod.GET;
+import static org.springframework.http.HttpMethod.PATCH;
+import static org.springframework.http.HttpMethod.POST;
+import static org.springframework.http.HttpMethod.PUT;
+
+public abstract class AbstractControllerTest {
+    protected MockMvc mockMvc;
+    protected static final ObjectMapper objectMapper = new ObjectMapper();
+
+    protected void setUpMockMvc(Object controller, ExceptionHandlerController exceptionHandlerController) {
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(exceptionHandlerController)
+                .build();
+    }
+
+    protected MockHttpServletResponse performRequest(HttpMethod method, String url, HttpStatus expectedStatus) throws Exception {
+        return performRequest(method, url, null, expectedStatus, null);
+    }
+
+    protected MockHttpServletResponse performRequest(HttpMethod method, String url, Object content, HttpStatus expectedStatus) throws Exception {
+        return performRequest(method, url, content, expectedStatus, null);
+    }
+
+    protected MockHttpServletResponse performRequest(HttpMethod method, String url, HttpStatus expectedStatus, Map<String, String> pathVariables) throws Exception {
+        return performRequest(method, url, null, expectedStatus, pathVariables);
+    }
+
+    protected MockHttpServletResponse performRequest(HttpMethod method, String url, Object content, HttpStatus expectedStatus, Map<String, String> queryParams) throws Exception {
+        MockHttpServletRequestBuilder requestBuilder;
+
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(url);
+        if (queryParams != null) {
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                uriBuilder.queryParam(entry.getKey(), entry.getValue());
+            }
+        }
+        String finalUrl = uriBuilder.toUriString();
+
+        if (method.equals(GET)) {
+            requestBuilder = MockMvcRequestBuilders.get(finalUrl);
+        } else if (method.equals(POST)) {
+            requestBuilder = MockMvcRequestBuilders.post(finalUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(content));
+        } else if (method.equals(PATCH)) {
+            requestBuilder = MockMvcRequestBuilders.patch(finalUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(content));
+        } else if (method.equals(DELETE)) {
+            requestBuilder = MockMvcRequestBuilders.delete(finalUrl);
+        } else if (method.equals(PUT)) {
+            requestBuilder = MockMvcRequestBuilders.put(finalUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(content));
+        } else {
+            throw new IllegalArgumentException("Unsupported method: " + method);
+        }
+
+        MockHttpServletResponse response = mockMvc.perform(requestBuilder)
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().is(expectedStatus.value()))
+                .andReturn()
+                .getResponse();
+        response.setCharacterEncoding("UTF-8");
+        return response;
+    }
+
+    protected static <T> T fromResponse(MockHttpServletResponse response, Class<T> clazz) throws JsonProcessingException, UnsupportedEncodingException {
+        return objectMapper.readValue(response.getContentAsString(), clazz);
+    }
+
+    protected static <T> T fromResponse(MockHttpServletResponse response, TypeReference<T> typeReference) throws JsonProcessingException, UnsupportedEncodingException {
+        return objectMapper.readValue(response.getContentAsString(), typeReference);
+    }
+}

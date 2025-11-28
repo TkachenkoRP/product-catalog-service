@@ -1,18 +1,37 @@
 package com.my.repository.impl;
 
+import com.my.exception.ProductCreationException;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
+import com.my.util.SequenceGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository implements ProductRepository {
+@Repository
+public class PostgresqlProductRepositoryImpl implements ProductRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final SequenceGenerator sequenceGenerator;
+
+    @Value("${datasource.schema}")
+    private String schema;
+
+    @Autowired
+    public PostgresqlProductRepositoryImpl(DataSource dataSource, SequenceGenerator sequenceGenerator) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sequenceGenerator = sequenceGenerator;
+    }
 
     private static final String PRODUCT_SEQUENCE = "product_seq";
 
@@ -21,6 +40,8 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     private static final String INSERT_SQL = "INSERT INTO %s.product (id, name, category_id, brand_id, price, stock) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_SQL = "UPDATE %s.product SET name = ?, category_id = ?, brand_id = ?, price = ?, stock = ? WHERE id = ?";
     private static final String DELETE_SQL = "DELETE FROM %s.product WHERE id = ?";
+    private static final String EXIST_BY_BRAND_ID = "SELECT EXISTS(SELECT 1 FROM %s.product WHERE brand_id = ?)";
+    private static final String EXIST_BY_CATEGORY_ID = "SELECT EXISTS(SELECT 1 FROM %s.product WHERE category_id = ?)";
 
     private static final String CATEGORY_ID_CONDITION = "category_id = ?";
     private static final String BRAND_ID_CONDITION = "brand_id = ?";
@@ -31,17 +52,8 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
     private static final String AND_JOIN = " AND ";
     private static final String ORDER_BY_ID = " ORDER BY id";
 
-    public PostgresqlProductRepositoryImpl() {
-        super();
-    }
-
-    public PostgresqlProductRepositoryImpl(Connection connection) {
-        super(connection);
-    }
-
     @Override
     public List<Product> getAll(ProductFilter filter) {
-        List<Product> products = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
                 String.format(SELECT_ALL_BASE_SQL, schema));
 
@@ -78,99 +90,78 @@ public class PostgresqlProductRepositoryImpl extends PostgresqlBaseRepository im
 
         sql.append(ORDER_BY_ID);
 
-        try (PreparedStatement statement = connection.prepareStatement(sql.toString())) {
-            for (int i = 0; i < parameters.size(); i++) {
-                statement.setObject(i + 1, parameters.get(i));
-            }
-            try (ResultSet rs = statement.executeQuery()) {
-                while (rs.next()) {
-                    products.add(mapResultSetToProduct(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения продуктов", e);
-        }
-
-        return products;
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> mapResultSetToProduct(rs));
     }
 
     @Override
     public Optional<Product> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToProduct(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения продукта по ID: " + id, e);
+        try {
+            Product product = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToProduct(rs), id);
+            return Optional.ofNullable(product);
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override
     public Product save(Product product) {
-        if (product.getId() == null) {
-            return insert(product);
-        } else {
-            return update(product);
-        }
-    }
-
-    private Product insert(Product product) {
         String sql = String.format(INSERT_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(PRODUCT_SEQUENCE);
-            stmt.setLong(1, id);
-            stmt.setString(2, product.getName());
-            stmt.setLong(3, product.getCategoryId());
-            stmt.setLong(4, product.getBrandId());
-            stmt.setDouble(5, product.getPrice());
-            stmt.setInt(6, product.getStock());
-            stmt.executeUpdate();
-            product.setId(id);
-            return product;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка добавления продукта", e);
+        Long nextSequenceValue = sequenceGenerator.getNextSequenceValue(PRODUCT_SEQUENCE);
+        try {
+            jdbcTemplate.update(sql,
+                    nextSequenceValue,
+                    product.getName(),
+                    product.getCategoryId(),
+                    product.getBrandId(),
+                    product.getPrice(),
+                    product.getStock()
+            );
+        } catch (DataAccessException e) {
+            if (e.getMessage().contains("violates foreign key constraint")) {
+                if (e.getMessage().contains("fk_product_brand")) {
+                    throw new ProductCreationException("Ошибка добавления продукта: указан несуществующий бренд");
+                } else if (e.getMessage().contains("fk_product_category")) {
+                    throw new ProductCreationException("Ошибка добавления продукта: указана несуществующая категория");
+                }
+            }
+            throw new ProductCreationException("Ошибка добавления продукта", e);
         }
+        product.setId(nextSequenceValue);
+        return product;
     }
 
     @Override
     public Product update(Product product) {
         String sql = String.format(UPDATE_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, product.getName());
-            stmt.setLong(2, product.getCategoryId());
-            stmt.setLong(3, product.getBrandId());
-            stmt.setDouble(4, product.getPrice());
-            stmt.setInt(5, product.getStock());
-            stmt.setLong(6, product.getId());
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка поиска продукта с ID: " + product.getId());
-            }
-            return product;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка обновления продукта", e);
-        }
+        jdbcTemplate.update(sql,
+                product.getName(),
+                product.getCategoryId(),
+                product.getBrandId(),
+                product.getPrice(),
+                product.getStock(),
+                product.getId()
+        );
+        return product;
     }
 
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
+        int update = jdbcTemplate.update(sql, id);
+        return update > 0;
+    }
 
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка удаления продукта с ID: " + id, e);
-        }
+    @Override
+    public boolean existsByBrandId(Long brandId) {
+        String sql = String.format(EXIST_BY_BRAND_ID, schema);
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, brandId));
+    }
+
+    @Override
+    public boolean existsByCategoryId(Long categoryId) {
+        String sql = String.format(EXIST_BY_CATEGORY_ID, schema);
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, categoryId));
     }
 
     private Product mapResultSetToProduct(ResultSet rs) throws SQLException {

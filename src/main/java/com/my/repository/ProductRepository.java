@@ -48,4 +48,18 @@ public interface ProductRepository {
      * @return true если удаление прошло успешно, false если товар не найден
      */
     boolean deleteById(Long id);
+
+    /**
+     * Проверяет существование товаров по ID бренда
+     * @param brandId ID бренда
+     * @return true если есть товары с указанным брендом, иначе false
+     */
+    boolean existsByBrandId(Long brandId);
+
+    /**
+     * Проверяет существование товаров по ID категории
+     * @param categoryId ID категории
+     * @return true если есть товары в указанной категории, иначе false
+     */
+    boolean existsByCategoryId(Long categoryId);
 }

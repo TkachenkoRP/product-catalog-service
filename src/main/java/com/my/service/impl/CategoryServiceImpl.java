@@ -4,29 +4,25 @@ import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
-import com.my.model.Product;
-import com.my.model.ProductFilter;
 import com.my.repository.CategoryRepository;
-import com.my.repository.impl.PostgresqlCategoryRepositoryImpl;
 import com.my.service.CacheService;
+import com.my.service.CatalogValidationService;
 import com.my.service.CategoryService;
-import com.my.service.ProductService;
 import com.my.util.CacheKeyGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
 import java.util.List;
 
+@Service
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
-    private final ProductService productService;
+    private final CatalogValidationService validationService;
     private final CacheService cacheService;
-
-    public CategoryServiceImpl() {
-        this(new PostgresqlCategoryRepositoryImpl(), new ProductServiceImpl(), new RedisCacheServiceImpl());
-    }
+    private final CategoryMapper categoryMapper;
 
     @Override
     public List<Category> getAll() {
@@ -71,7 +67,7 @@ public class CategoryServiceImpl implements CategoryService {
         if (existsByName(sourceCategory.getName())) {
             throw new AlreadyExistException(sourceCategory.getName() + " уже существует");
         }
-        CategoryMapper.INSTANCE.updateCategory(sourceCategory, updatedCategory);
+        categoryMapper.updateCategory(sourceCategory, updatedCategory);
         Category updated = categoryRepository.update(updatedCategory);
 
         cacheService.invalidate(CacheKeyGenerator.generateCategoryKey(id));
@@ -82,7 +78,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public boolean deleteById(Long id) {
-        if (hasProductsWithCategory(id)) {
+        if (validationService.categoryHasProducts(id)) {
             return false;
         }
         boolean success = categoryRepository.deleteById(id);
@@ -91,12 +87,6 @@ public class CategoryServiceImpl implements CategoryService {
             cacheService.invalidate(CacheKeyGenerator.generateAllCategoriesKey());
         }
         return success;
-    }
-
-    private boolean hasProductsWithCategory(Long categoryId) {
-        ProductFilter filter = new ProductFilter(categoryId, null, null, null, null);
-        List<Product> products = productService.getAll(filter);
-        return !products.isEmpty();
     }
 
     @Override

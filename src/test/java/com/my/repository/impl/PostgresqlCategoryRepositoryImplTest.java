@@ -4,6 +4,8 @@ import com.my.model.Category;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
 import com.my.repository.CategoryRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
     private final CategoryRepository categoryRepository;
 
+    @Autowired
     PostgresqlCategoryRepositoryImplTest(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
@@ -141,8 +144,8 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
 
         try {
             categoryRepository.save(category2);
-        } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка добавления категории");
+        } catch (DataAccessException e) {
+            assertThat(e).hasMessageContaining("category_name_key");
         }
     }
 }

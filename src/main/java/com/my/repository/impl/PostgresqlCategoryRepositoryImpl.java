@@ -2,16 +2,33 @@ package com.my.repository.impl;
 
 import com.my.model.Category;
 import com.my.repository.CategoryRepository;
+import com.my.util.SequenceGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import javax.sql.DataSource;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository implements CategoryRepository {
+@Repository
+public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
+
+    private final JdbcTemplate jdbcTemplate;
+    private final SequenceGenerator sequenceGenerator;
+
+    @Value("${datasource.schema}")
+    private String schema;
+
+    @Autowired
+    public PostgresqlCategoryRepositoryImpl(DataSource dataSource, SequenceGenerator sequenceGenerator) {
+        this.jdbcTemplate = new JdbcTemplate(dataSource);
+        this.sequenceGenerator = sequenceGenerator;
+    }
 
     private static final String CATEGORY_SEQUENCE = "category_seq";
 
@@ -22,116 +39,63 @@ public class PostgresqlCategoryRepositoryImpl extends PostgresqlBaseRepository i
     private static final String DELETE_SQL = "DELETE FROM %s.category WHERE id = ?";
     private static final String EXISTS_BY_NAME_SQL = "SELECT COUNT(*) FROM %s.category WHERE LOWER(name) = LOWER(?)";
 
-    public PostgresqlCategoryRepositoryImpl() {
+    public PostgresqlCategoryRepositoryImpl(JdbcTemplate jdbcTemplate, SequenceGenerator sequenceGenerator) {
         super();
-    }
-
-    public PostgresqlCategoryRepositoryImpl(Connection connection) {
-        super(connection);
+        this.jdbcTemplate = jdbcTemplate;
+        this.sequenceGenerator = sequenceGenerator;
     }
 
     @Override
     public List<Category> getAll() {
-        List<Category> categories = new ArrayList<>();
         String sql = String.format(SELECT_ALL_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                categories.add(mapResultSetToCategory(rs));
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения категорий", e);
-        }
-        return categories;
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToCategory(rs));
     }
 
     @Override
     public Optional<Category> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapResultSetToCategory(rs));
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка получения категории с ID: " + id, e);
+        try {
+            Category category = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToCategory(rs), id);
+            return Optional.ofNullable(category);
+        } catch (DataAccessException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override
     public Category save(Category category) {
-        if (category.getId() == null) {
-            return insert(category);
-        } else {
-            return update(category);
-        }
-    }
-
-    private Category insert(Category category) {
         String sql = String.format(INSERT_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            Long id = getNextSequenceValue(CATEGORY_SEQUENCE);
-            stmt.setLong(1, id);
-            stmt.setString(2, category.getName());
-            stmt.executeUpdate();
-            category.setId(id);
-            return category;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка добавления категории", e);
-        }
+        Long nextSequenceValue = sequenceGenerator.getNextSequenceValue(CATEGORY_SEQUENCE);
+        jdbcTemplate.update(sql,
+                nextSequenceValue,
+                category.getName()
+        );
+        category.setId(nextSequenceValue);
+        return category;
     }
 
     @Override
     public Category update(Category category) {
         String sql = String.format(UPDATE_SQL, schema);
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, category.getName());
-            stmt.setLong(2, category.getId());
-            int affectedRows = stmt.executeUpdate();
-            if (affectedRows == 0) {
-                throw new RuntimeException("Ошибка обновления категории с ID: " + category.getId());
-            }
-            return category;
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка обновления категории", e);
-        }
+        jdbcTemplate.update(sql,
+                category.getName(),
+                category.getId()
+        );
+        return category;
     }
 
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setLong(1, id);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка уделения категории с ID: " + id, e);
-        }
+        int update = jdbcTemplate.update(sql, id);
+        return update > 0;
     }
 
     @Override
     public boolean existsByNameIgnoreCase(String categoryName) {
         String sql = String.format(EXISTS_BY_NAME_SQL, schema);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setString(1, categoryName);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1) > 0;
-                }
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Ошибка проверки имени категории", e);
-        }
-        return false;
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, categoryName);
+        return count != null && count > 0;
     }
 
     private Category mapResultSetToCategory(ResultSet rs) throws SQLException {

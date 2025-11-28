@@ -4,29 +4,25 @@ import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
-import com.my.model.Product;
-import com.my.model.ProductFilter;
 import com.my.repository.BrandRepository;
-import com.my.repository.impl.PostgresqlBrandRepositoryImpl;
 import com.my.service.BrandService;
 import com.my.service.CacheService;
-import com.my.service.ProductService;
+import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
 import java.util.List;
 
+@Service
 @RequiredArgsConstructor
 public class BrandServiceImpl implements BrandService {
 
     private final BrandRepository brandRepository;
-    private final ProductService productService;
+    private final CatalogValidationService validationService;
     private final CacheService cacheService;
-
-    public BrandServiceImpl() {
-        this(new PostgresqlBrandRepositoryImpl(), new ProductServiceImpl(), new RedisCacheServiceImpl());
-    }
+    private final BrandMapper brandMapper;
 
     @Override
     public List<Brand> getAll() {
@@ -71,7 +67,7 @@ public class BrandServiceImpl implements BrandService {
         if (existsByName(sourceBrand.getName())) {
             throw new AlreadyExistException(sourceBrand.getName() + " уже существует");
         }
-        BrandMapper.INSTANCE.updateBrand(sourceBrand, updatedBrand);
+        brandMapper.updateBrand(sourceBrand, updatedBrand);
         Brand updated = brandRepository.update(updatedBrand);
 
         cacheService.invalidate(CacheKeyGenerator.generateBrandKey(id));
@@ -82,7 +78,7 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public boolean deleteById(Long id) {
-        if (hasProductsWithBrand(id)) {
+        if (validationService.brandHasProducts(id)) {
             return false;
         }
         boolean success = brandRepository.deleteById(id);
@@ -91,12 +87,6 @@ public class BrandServiceImpl implements BrandService {
             cacheService.invalidate(CacheKeyGenerator.generateAllBrandsKey());
         }
         return success;
-    }
-
-    private boolean hasProductsWithBrand(Long brandId) {
-        ProductFilter filter = new ProductFilter(null, brandId, null, null, null);
-        List<Product> products = productService.getAll(filter);
-        return !products.isEmpty();
     }
 
     @Override

@@ -4,6 +4,8 @@ import com.my.model.Brand;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
 import com.my.repository.BrandRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +16,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
 
     private final BrandRepository brandRepository;
 
+    @Autowired
     PostgresqlBrandRepositoryImplTest(BrandRepository brandRepository) {
         this.brandRepository = brandRepository;
     }
@@ -33,13 +36,14 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     void whenGetBrandById_withExistingId_thenReturnBrand() {
         List<Brand> brands = brandRepository.getAll();
         Long existingBrandId = brands.get(0).getId();
+        String expectedName = brands.get(0).getName();
 
         Optional<Brand> brandOpt = brandRepository.getById(existingBrandId);
 
         assertThat(brandOpt).isPresent();
         brandOpt.ifPresent(brand -> {
             assertThat(brand.getId()).isEqualTo(existingBrandId);
-            assertThat(brand.getName()).isNotBlank();
+            assertThat(brand.getName()).isEqualTo(expectedName);
         });
     }
 
@@ -69,22 +73,23 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     void whenUpdateExistingBrand_thenBrandIsUpdated() {
         List<Brand> brands = brandRepository.getAll();
         Brand existingBrand = brands.get(0);
+        String updatedName = "Updated " + existingBrand.getName();
 
-        Brand brandToUpdate = new Brand(existingBrand.getId(), "Updated Samsung");
+        Brand brandToUpdate = new Brand(existingBrand.getId(), updatedName);
 
         Brand updatedBrand = brandRepository.update(brandToUpdate);
 
         assertThat(updatedBrand)
                 .isNotNull()
                 .extracting(Brand::getName)
-                .isEqualTo("Updated Samsung");
+                .isEqualTo(updatedName);
 
         Optional<Brand> verifiedBrand = brandRepository.getById(existingBrand.getId());
         assertThat(verifiedBrand)
                 .isPresent()
                 .get()
                 .extracting(Brand::getName)
-                .isEqualTo("Updated Samsung");
+                .isEqualTo(updatedName);
     }
 
     @Test
@@ -103,6 +108,8 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
         Brand brandToDelete = new Brand("To Delete");
         Brand savedBrand = brandRepository.save(brandToDelete);
         Long brandId = savedBrand.getId();
+
+        assertThat(brandRepository.getById(brandId)).isPresent();
 
         boolean deleted = brandRepository.deleteById(brandId);
 
@@ -142,8 +149,8 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
 
         try {
             brandRepository.save(brand2);
-        } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка добавления бренда");
+        } catch (DataAccessException e) {
+            assertThat(e).hasMessageContaining("brand_name_key");
         }
     }
 }
