@@ -1,6 +1,7 @@
 package com.my.service.impl;
 
 import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
@@ -141,9 +142,10 @@ class BrandServiceImplTest {
         Long brandId = 1L;
         when(validationService.brandHasProducts(brandId)).thenReturn(true);
 
-        boolean result = brandService.deleteById(brandId);
+        assertThatThrownBy(() -> brandService.deleteById(brandId))
+                .isInstanceOf(EntityHasReferencesException.class)
+                .hasMessageContaining("Невозможно удалить бренд с ID=" + brandId);
 
-        assertThat(result).isFalse();
         verify(brandRepository, never()).deleteById(any());
     }
 

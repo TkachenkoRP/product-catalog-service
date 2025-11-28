@@ -1,6 +1,7 @@
 package com.my.service.impl;
 
 import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
@@ -79,7 +80,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public boolean deleteById(Long id) {
         if (validationService.categoryHasProducts(id)) {
-            return false;
+            throw new EntityHasReferencesException("категорию", id);
         }
         boolean success = categoryRepository.deleteById(id);
         if (success) {

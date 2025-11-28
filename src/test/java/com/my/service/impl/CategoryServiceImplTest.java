@@ -1,6 +1,7 @@
 package com.my.service.impl;
 
 import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
@@ -163,9 +164,10 @@ class CategoryServiceImplTest {
         Long categoryId = 1L;
         when(validationService.categoryHasProducts(categoryId)).thenReturn(true);
 
-        boolean result = categoryService.deleteById(categoryId);
+        assertThatThrownBy(() -> categoryService.deleteById(categoryId))
+                .isInstanceOf(EntityHasReferencesException.class)
+                .hasMessageContaining("Невозможно удалить категорию с ID=" + categoryId);
 
-        assertThat(result).isFalse();
         verify(categoryRepository, never()).deleteById(any());
         verify(cacheService, never()).invalidate(anyString());
     }

@@ -1,6 +1,7 @@
 package com.my.service.impl;
 
 import com.my.exception.AlreadyExistException;
+import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
@@ -79,7 +80,7 @@ public class BrandServiceImpl implements BrandService {
     @Override
     public boolean deleteById(Long id) {
         if (validationService.brandHasProducts(id)) {
-            return false;
+            throw new EntityHasReferencesException("бренд", id);
         }
         boolean success = brandRepository.deleteById(id);
         if (success) {

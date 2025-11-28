@@ -90,7 +90,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
 
         sql.append(ORDER_BY_ID);
 
-        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> mapResultSetToProduct(rs));
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> mapResultSetToProduct(rs), parameters.toArray());
     }
 
     @Override
@@ -120,12 +120,12 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         } catch (DataAccessException e) {
             if (e.getMessage().contains("violates foreign key constraint")) {
                 if (e.getMessage().contains("fk_product_brand")) {
-                    throw new ProductCreationException("Ошибка добавления продукта: указан несуществующий бренд");
+                    throw new ProductCreationException("Ошибка добавления товара: указан несуществующий бренд");
                 } else if (e.getMessage().contains("fk_product_category")) {
-                    throw new ProductCreationException("Ошибка добавления продукта: указана несуществующая категория");
+                    throw new ProductCreationException("Ошибка добавления товара: указана несуществующая категория");
                 }
             }
-            throw new ProductCreationException("Ошибка добавления продукта", e);
+            throw new ProductCreationException("Ошибка добавления товара", e);
         }
         product.setId(nextSequenceValue);
         return product;
@@ -134,14 +134,25 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
     @Override
     public Product update(Product product) {
         String sql = String.format(UPDATE_SQL, schema);
-        jdbcTemplate.update(sql,
-                product.getName(),
-                product.getCategoryId(),
-                product.getBrandId(),
-                product.getPrice(),
-                product.getStock(),
-                product.getId()
-        );
+        try {
+            jdbcTemplate.update(sql,
+                    product.getName(),
+                    product.getCategoryId(),
+                    product.getBrandId(),
+                    product.getPrice(),
+                    product.getStock(),
+                    product.getId()
+            );
+        } catch (DataAccessException e) {
+            if (e.getMessage().contains("violates foreign key constraint")) {
+                if (e.getMessage().contains("fk_product_brand")) {
+                    throw new ProductCreationException("Ошибка обновления товара: указан несуществующий бренд");
+                } else if (e.getMessage().contains("fk_product_category")) {
+                    throw new ProductCreationException("Ошибка обновления товара: указана несуществующая категория");
+                }
+            }
+            throw new ProductCreationException("Ошибка обновления товара", e);
+        }
         return product;
     }
 

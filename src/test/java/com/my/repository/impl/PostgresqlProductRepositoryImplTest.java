@@ -158,7 +158,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
         try {
             productRepository.update(nonExistentProduct);
         } catch (RuntimeException e) {
-            assertThat(e).hasMessageContaining("Ошибка поиска продукта с ID: 999");
+            assertThat(e).hasMessageContaining("Ошибка поиска товара с ID: 999");
         }
     }
 
@@ -199,7 +199,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
         try {
             productRepository.save(invalidProduct);
         } catch (ProductCreationException e) {
-            assertThat(e).hasMessageContaining("Ошибка добавления продукта");
+            assertThat(e).hasMessageContaining("Ошибка добавления товара");
         }
     }
 
