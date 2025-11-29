@@ -1,5 +1,6 @@
 package com.my.controller;
 
+import com.my.annotation.Audition;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.mapper.UserMapper;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Audition
 public class AuthController {
     private final UserService userService;
     private final UserMapper userMapper;

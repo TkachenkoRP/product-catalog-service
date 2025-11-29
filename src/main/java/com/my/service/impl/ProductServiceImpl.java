@@ -1,6 +1,7 @@
 package com.my.service.impl;
 
 import com.my.annotation.Audition;
+import com.my.annotation.Loggable;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
 import com.my.model.Product;
@@ -17,6 +18,7 @@ import java.util.List;
 @Audition
 @Service
 @RequiredArgsConstructor
+@Loggable
 public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;

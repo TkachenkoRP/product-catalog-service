@@ -1,5 +1,6 @@
 package com.my.controller;
 
+import com.my.annotation.Audition;
 import com.my.dto.ProductRequestDto;
 import com.my.dto.ProductResponseDto;
 import com.my.mapper.ProductMapper;
@@ -22,6 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/product")
 @RequiredArgsConstructor
+@Audition
 public class ProductController {
     private final ProductService productService;
     private final ProductMapper productMapper;

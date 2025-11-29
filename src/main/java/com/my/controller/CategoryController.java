@@ -1,5 +1,6 @@
 package com.my.controller;
 
+import com.my.annotation.Audition;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
 import com.my.mapper.CategoryMapper;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/category")
 @RequiredArgsConstructor
+@Audition
 public class CategoryController {
     private final CategoryService categoryService;
     private final CategoryMapper categoryMapper;

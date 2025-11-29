@@ -1,5 +1,6 @@
 package com.my.controller;
 
+import com.my.annotation.Audition;
 import com.my.dto.BrandRequestDto;
 import com.my.dto.BrandResponseDto;
 import com.my.mapper.BrandMapper;
@@ -20,6 +21,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/brand")
 @RequiredArgsConstructor
+@Audition
 public class BrandController {
     private final BrandService brandService;
     private final BrandMapper brandMapper;
