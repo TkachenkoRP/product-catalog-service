@@ -8,6 +8,7 @@ import com.my.model.Category;
 import com.my.repository.CategoryRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
+import com.my.util.CacheKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +24,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,30 +49,73 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void whenGetAll_thenReturnCategoriesFromRepository() {
+    void whenGetAll_thenReturnCategoriesFromRepositoryAndCache() {
         List<Category> expectedCategories = Arrays.asList(
                 new Category(1L, "Electronics"),
                 new Category(2L, "Clothing")
         );
+        String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
+
         when(categoryRepository.getAll()).thenReturn(expectedCategories);
-        when(cacheService.getList(any(),any())).thenReturn(null);
+        when(cacheService.getList(cacheKey, Category.class)).thenReturn(null);
 
         List<Category> result = categoryService.getAll();
 
         assertThat(result).isEqualTo(expectedCategories);
+        verify(cacheService).getList(cacheKey, Category.class);
+        verify(cacheService).put(cacheKey, expectedCategories);
         verify(categoryRepository).getAll();
     }
 
     @Test
-    void whenGetExistingCategoryById_thenReturnCategory() {
+    void whenGetAll_thenReturnCategoriesFromCache() {
+        List<Category> expectedCategories = Arrays.asList(
+                new Category(1L, "Electronics"),
+                new Category(2L, "Clothing")
+        );
+        String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
+
+        when(cacheService.getList(cacheKey, Category.class)).thenReturn(expectedCategories);
+
+        List<Category> result = categoryService.getAll();
+
+        assertThat(result).isEqualTo(expectedCategories);
+        verify(cacheService).getList(cacheKey, Category.class);
+        verify(cacheService, never()).put(anyString(), any());
+        verify(categoryRepository, never()).getAll();
+    }
+
+    @Test
+    void whenGetExistingCategoryById_thenReturnCategoryFromRepositoryAndCache() {
         Long categoryId = 1L;
         Category expectedCategory = new Category(categoryId, "Electronics");
-        when(categoryRepository.getById(categoryId)).thenReturn(Optional.of(expectedCategory));
+        String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
+        when(cacheService.get(cacheKey, Category.class)).thenReturn(null);
+        when(categoryRepository.getById(categoryId)).thenReturn(Optional.of(expectedCategory));
 
         Category result = categoryService.getById(categoryId);
 
         assertThat(result).isEqualTo(expectedCategory);
+        verify(cacheService).get(cacheKey, Category.class);
+        verify(cacheService).put(cacheKey, expectedCategory);
+        verify(categoryRepository).getById(categoryId);
+    }
+
+    @Test
+    void whenGetExistingCategoryById_thenReturnCategoryFromCache() {
+        Long categoryId = 1L;
+        Category expectedCategory = new Category(categoryId, "Electronics");
+        String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
+
+        when(cacheService.get(cacheKey, Category.class)).thenReturn(expectedCategory);
+
+        Category result = categoryService.getById(categoryId);
+
+        assertThat(result).isEqualTo(expectedCategory);
+        verify(cacheService).get(cacheKey, Category.class);
+        verify(cacheService, never()).put(anyString(), any());
+        verify(categoryRepository, never()).getById(any());
     }
 
     @Test
@@ -86,9 +129,10 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void whenSaveNewCategory_thenReturnSavedCategory() {
+    void whenSaveNewCategory_thenReturnSavedCategoryAndInvalidateCache() {
         Category newCategory = new Category("Sports");
         Category savedCategory = new Category(1L, "Sports");
+        String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
         when(categoryRepository.existsByNameIgnoreCase("Sports")).thenReturn(false);
         when(categoryRepository.save(newCategory)).thenReturn(savedCategory);
@@ -97,7 +141,7 @@ class CategoryServiceImplTest {
 
         assertThat(result).isEqualTo(savedCategory);
         verify(categoryRepository).save(newCategory);
-        verify(cacheService).invalidate(anyString());
+        verify(cacheService).invalidate(cacheKey);
     }
 
     @Test
@@ -113,13 +157,15 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void whenUpdateCategory_thenReturnUpdatedCategory() {
+    void whenUpdateCategory_thenReturnUpdatedCategoryAndInvalidateCache() {
         Long categoryId = 1L;
         Category sourceCategory = new Category("Updated Electronics");
         Category existingCategory = new Category(categoryId, "Electronics");
         Category updatedCategory = new Category(categoryId, "Updated Electronics");
+        String categoryCacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
+        String allCategoriesCacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
-        when(categoryRepository.getById(categoryId)).thenReturn(Optional.of(existingCategory));
+        when(cacheService.get(categoryCacheKey, Category.class)).thenReturn(existingCategory);
         when(categoryRepository.existsByNameIgnoreCase("Updated Electronics")).thenReturn(false);
         when(categoryRepository.update(existingCategory)).thenReturn(updatedCategory);
 
@@ -127,7 +173,8 @@ class CategoryServiceImplTest {
 
         assertThat(result).isEqualTo(updatedCategory);
         verify(categoryMapper).updateCategory(sourceCategory, existingCategory);
-        verify(cacheService, times(2)).invalidate(anyString());
+        verify(cacheService).invalidate(categoryCacheKey);
+        verify(cacheService).invalidate(allCategoriesCacheKey);
     }
 
     @Test
@@ -147,8 +194,11 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void whenDeleteCategoryWithoutProducts_thenReturnTrue() {
+    void whenDeleteCategoryWithoutProducts_thenReturnTrueAndInvalidateCache() {
         Long categoryId = 1L;
+        String categoryCacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
+        String allCategoriesCacheKey = CacheKeyGenerator.generateAllCategoriesKey();
+
         when(validationService.categoryHasProducts(categoryId)).thenReturn(false);
         when(categoryRepository.deleteById(categoryId)).thenReturn(true);
 
@@ -156,7 +206,22 @@ class CategoryServiceImplTest {
 
         assertThat(result).isTrue();
         verify(categoryRepository).deleteById(categoryId);
-        verify(cacheService, times(2)).invalidate(anyString());
+        verify(cacheService).invalidate(categoryCacheKey);
+        verify(cacheService).invalidate(allCategoriesCacheKey);
+    }
+
+    @Test
+    void whenDeleteCategoryFails_thenReturnFalseAndDoNotInvalidateCache() {
+        Long categoryId = 1L;
+
+        when(validationService.categoryHasProducts(categoryId)).thenReturn(false);
+        when(categoryRepository.deleteById(categoryId)).thenReturn(false);
+
+        boolean result = categoryService.deleteById(categoryId);
+
+        assertThat(result).isFalse();
+        verify(categoryRepository).deleteById(categoryId);
+        verify(cacheService, never()).invalidate(anyString());
     }
 
     @Test
@@ -172,18 +237,6 @@ class CategoryServiceImplTest {
         verify(cacheService, never()).invalidate(anyString());
     }
 
-    @Test
-    void whenDeleteCategoryRepositoryReturnsFalse_thenReturnFalse() {
-        Long categoryId = 1L;
-        when(validationService.categoryHasProducts(categoryId)).thenReturn(false);
-        when(categoryRepository.deleteById(categoryId)).thenReturn(false);
-
-        boolean result = categoryService.deleteById(categoryId);
-
-        assertThat(result).isFalse();
-        verify(categoryRepository).deleteById(categoryId);
-        verify(cacheService, never()).invalidate(anyString());
-    }
 
     @Test
     void whenExistsByName_thenDelegateToRepository() {

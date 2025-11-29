@@ -2,6 +2,7 @@ package com.my.controller;
 
 import com.my.dto.ErrorResponseDto;
 import com.my.exception.AlreadyExistException;
+import com.my.exception.CacheException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.exception.ProductCreationException;
@@ -36,6 +37,13 @@ public class ExceptionHandlerController {
     public ErrorResponseDto entityHasReferences(EntityHasReferencesException e) {
         return new ErrorResponseDto(e.getLocalizedMessage());
     }
+
+    @ExceptionHandler(CacheException.class)
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponseDto cacheException(CacheException e) {
+        return new ErrorResponseDto(e.getLocalizedMessage());
+    }
+
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)

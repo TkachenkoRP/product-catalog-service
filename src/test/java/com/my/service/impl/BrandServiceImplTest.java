@@ -8,6 +8,7 @@ import com.my.model.Brand;
 import com.my.repository.BrandRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
+import com.my.util.CacheKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,29 +49,57 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void whenGetAll_thenReturnBrandsFromRepository() {
+    void whenGetAll_thenReturnBrandsFromRepositoryAndCache() {
         List<Brand> expectedBrands = Arrays.asList(
                 new Brand(1L, "Samsung"),
                 new Brand(2L, "Apple")
         );
+        String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
+
+        when(cacheService.getList(cacheKey, Brand.class)).thenReturn(null);
         when(brandRepository.getAll()).thenReturn(expectedBrands);
-        when(cacheService.getList(any(),any())).thenReturn(null);
 
         List<Brand> result = brandService.getAll();
 
         assertThat(result).isEqualTo(expectedBrands);
+        verify(cacheService).getList(cacheKey, Brand.class);
+        verify(cacheService).put(cacheKey, expectedBrands);
         verify(brandRepository).getAll();
     }
 
     @Test
-    void whenGetExistingBrandById_thenReturnBrand() {
+    void whenGetAll_thenReturnBrandsFromCache() {
+        List<Brand> expectedBrands = Arrays.asList(
+                new Brand(1L, "Samsung"),
+                new Brand(2L, "Apple")
+        );
+        String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
+
+        when(cacheService.getList(cacheKey, Brand.class)).thenReturn(expectedBrands);
+
+        List<Brand> result = brandService.getAll();
+
+        assertThat(result).isEqualTo(expectedBrands);
+        verify(cacheService).getList(cacheKey, Brand.class);
+        verify(cacheService, never()).put(anyString(), any());
+        verify(brandRepository, never()).getAll();
+    }
+
+    @Test
+    void whenGetExistingBrandById_thenReturnBrandFromRepositoryAndCache() {
         Long brandId = 1L;
         Brand expectedBrand = new Brand(brandId, "Samsung");
+        String cacheKey = CacheKeyGenerator.generateBrandKey(brandId);
+
+        when(cacheService.get(cacheKey, Brand.class)).thenReturn(null);
         when(brandRepository.getById(brandId)).thenReturn(Optional.of(expectedBrand));
 
         Brand result = brandService.getById(brandId);
 
         assertThat(result).isEqualTo(expectedBrand);
+        verify(cacheService).get(cacheKey, Brand.class);
+        verify(cacheService).put(cacheKey, expectedBrand);
+        verify(brandRepository).getById(brandId);
     }
 
     @Test
@@ -83,9 +113,10 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void whenSaveNewBrand_thenReturnSavedBrand() {
+    void whenSaveNewBrand_thenReturnSavedBrandAndInvalidateCache() {
         Brand newBrand = new Brand("Sony");
         Brand savedBrand = new Brand(1L, "Sony");
+        String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(brandRepository.existsByNameIgnoreCase("Sony")).thenReturn(false);
         when(brandRepository.save(newBrand)).thenReturn(savedBrand);
@@ -94,6 +125,7 @@ class BrandServiceImplTest {
 
         assertThat(result).isEqualTo(savedBrand);
         verify(brandRepository).save(newBrand);
+        verify(cacheService).invalidate(cacheKey);
     }
 
     @Test
@@ -109,13 +141,15 @@ class BrandServiceImplTest {
     }
 
     @Test
-    void whenUpdateBrand_thenReturnUpdatedBrand() {
+    void whenUpdateBrand_thenReturnUpdatedBrandAndInvalidateCache() {
         Long brandId = 1L;
         Brand sourceBrand = new Brand("Updated Samsung");
         Brand existingBrand = new Brand(brandId, "Samsung");
         Brand updatedBrand = new Brand(brandId, "Updated Samsung");
+        String brandCacheKey = CacheKeyGenerator.generateBrandKey(brandId);
+        String allBrandsCacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
-        when(brandRepository.getById(brandId)).thenReturn(Optional.of(existingBrand));
+        when(cacheService.get(brandCacheKey, Brand.class)).thenReturn(existingBrand);
         when(brandRepository.existsByNameIgnoreCase("Updated Samsung")).thenReturn(false);
         when(brandRepository.update(existingBrand)).thenReturn(updatedBrand);
 
@@ -123,11 +157,16 @@ class BrandServiceImplTest {
 
         assertThat(result).isEqualTo(updatedBrand);
         verify(brandMapper).updateBrand(sourceBrand, existingBrand);
+        verify(cacheService).invalidate(brandCacheKey);
+        verify(cacheService).invalidate(allBrandsCacheKey);
     }
 
     @Test
-    void whenDeleteBrandWithoutProducts_thenReturnTrue() {
+    void whenDeleteBrandWithoutProducts_thenReturnTrueAndInvalidateCache() {
         Long brandId = 1L;
+        String brandCacheKey = CacheKeyGenerator.generateBrandKey(brandId);
+        String allBrandsCacheKey = CacheKeyGenerator.generateAllBrandsKey();
+
         when(validationService.brandHasProducts(brandId)).thenReturn(false);
         when(brandRepository.deleteById(brandId)).thenReturn(true);
 
@@ -135,6 +174,8 @@ class BrandServiceImplTest {
 
         assertThat(result).isTrue();
         verify(brandRepository).deleteById(brandId);
+        verify(cacheService).invalidate(brandCacheKey);
+        verify(cacheService).invalidate(allBrandsCacheKey);
     }
 
     @Test
