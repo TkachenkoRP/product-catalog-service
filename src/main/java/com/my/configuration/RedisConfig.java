@@ -1,27 +1,33 @@
 package com.my.configuration;
 
-import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
+@Configuration
 public class RedisConfig {
-    private RedisConfig() {
-    }
+    @Value("${redis.host}")
+    private String host;
 
-    @Getter
-    private static final JedisPool jedisPool;
+    @Value("${redis.port}")
+    private int port;
 
-    static {
+    @Value("${redis.timeout}")
+    private int timeout;
+
+    @Value("${redis.password}")
+    private String password;
+
+    @Value("${redis.database}")
+    private int database;
+
+    @Bean
+    public JedisPool jedisPool() {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(128);
 
-        String host = AppConfiguration.getProperty("redis.host");
-        int port = Integer.parseInt(AppConfiguration.getProperty("redis.port"));
-        int timeout = Integer.parseInt(AppConfiguration.getProperty("redis.timeout"));
-        String password = AppConfiguration.getProperty("redis.password");
-        int database = Integer.parseInt(AppConfiguration.getProperty("redis.database"));
-
-        jedisPool = new JedisPool(poolConfig, host, port, timeout, password, database);
+        return new JedisPool(poolConfig, host, port, timeout, password, database);
     }
-
 }

@@ -2,10 +2,10 @@ package com.my.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.my.configuration.AppConfiguration;
 import com.my.configuration.JacksonConfig;
-import com.my.configuration.RedisConfig;
-import org.springframework.stereotype.Service;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -13,21 +13,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-@Service
+@Component
+@RequiredArgsConstructor
 public class RedisCacheService {
     private final JedisPool jedisPool;
-    private final ObjectMapper objectMapper;
-    private final int defaultTtlMinutes;
+    private final ObjectMapper objectMapper  = JacksonConfig.createObjectMapper();;
 
-    public RedisCacheService() {
-        this(RedisConfig.getJedisPool(), Integer.parseInt(AppConfiguration.getProperty("redis.cache.ttl.minutes")));
-    }
-
-    public RedisCacheService(JedisPool jedisPool, int defaultTtlMinutes) {
-        this.jedisPool = jedisPool;
-        this.objectMapper = JacksonConfig.createObjectMapper();
-        this.defaultTtlMinutes = defaultTtlMinutes;
-    }
+    @Value("${redis.cache.ttl.minutes}")
+    private int defaultTtlMinutes;
 
     public void put(String key, Object value) {
         put(key, value, defaultTtlMinutes);

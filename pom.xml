@@ -26,6 +26,8 @@
         <jakarta.version>6.1.0</jakarta.version>
         <slf4j.version>2.0.17</slf4j.version>
         <redis.version>7.1.0</redis.version>
+        <springframework.version>6.2.11</springframework.version>
+        <snakeyaml.version>2.5</snakeyaml.version>
     </properties>
 
     <dependencies>
@@ -52,17 +54,17 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
-            <version>6.2.11</version>
+            <version>${springframework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-jdbc</artifactId>
-            <version>6.2.11</version>
+            <version>${springframework.version}</version>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.5</version>
+            <version>${snakeyaml.version}</version>
         </dependency>
 
         <dependency>
@@ -113,7 +115,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
-            <version>6.2.11</version>
+            <version>${springframework.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
