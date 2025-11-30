@@ -1,7 +1,8 @@
 package com.my.controller;
 
 import com.my.dto.ErrorResponseDto;
-import com.my.dto.UserRequestDto;
+import com.my.dto.UserLoginRequestDto;
+import com.my.dto.UserRegisterRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
@@ -41,7 +42,7 @@ class AuthControllerTest extends AbstractControllerTest {
 
     @Test
     void whenLoginWithValidCredentials_thenReturnUser() throws Exception {
-        UserRequestDto requestDto = new UserRequestDto("test@test.ru", "Test User", "password123");
+        UserLoginRequestDto requestDto = new UserLoginRequestDto("test@test.ru", "password123");
         User user = new User(1L, "test@test.ru", "Test User", "password123", UserRole.ROLE_USER);
         UserResponseDto responseDto = new UserResponseDto(1L, "test@test.ru", "Test User", "ROLE_USER");
 
@@ -66,7 +67,7 @@ class AuthControllerTest extends AbstractControllerTest {
 
     @Test
     void whenLoginWithInvalidCredentials_thenReturnNotFound() throws Exception {
-        UserRequestDto requestDto = new UserRequestDto("wrong@test.ru", "Wrong User", "wrongpassword");
+        UserLoginRequestDto requestDto = new UserLoginRequestDto("wrong@test.ru", "wrongpassword");
 
         when(userService.login("wrong@test.ru", "wrongpassword"))
                 .thenThrow(new EntityNotFoundException("Введены неверные данные"));
@@ -83,6 +84,51 @@ class AuthControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void whenLoginWithBlankEmail_thenReturnBadRequest() throws Exception {
+        UserLoginRequestDto requestDto = new UserLoginRequestDto("", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/login",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле email должно быть заполнено");
+    }
+
+    @Test
+    void whenLoginWithInvalidEmail_thenReturnBadRequest() throws Exception {
+        UserLoginRequestDto requestDto = new UserLoginRequestDto("invalid-email", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/login",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Введите корректный email");
+    }
+
+    @Test
+    void whenLoginWithBlankPassword_thenReturnBadRequest() throws Exception {
+        UserLoginRequestDto requestDto = new UserLoginRequestDto("valid@email.com", "");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/login",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле password должно быть заполнено");
+    }
+
+    @Test
     void whenLogout_thenReturnSuccess() throws Exception {
         MockHttpServletResponse response = performRequest(
                 HttpMethod.POST,
@@ -96,7 +142,7 @@ class AuthControllerTest extends AbstractControllerTest {
 
     @Test
     void whenRegisterWithAvailableEmail_thenReturnUser() throws Exception {
-        UserRequestDto requestDto = new UserRequestDto("newuser@test.ru", "New User", "password123");
+        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("newuser@test.ru", "New User", "password123");
         User user = new User(1L, "newuser@test.ru", "New User", "password123", UserRole.ROLE_USER);
         UserResponseDto responseDto = new UserResponseDto(1L, "newuser@test.ru", "New User", "ROLE_USER");
 
@@ -117,5 +163,65 @@ class AuthControllerTest extends AbstractControllerTest {
                 .containsExactly("newuser@test.ru", "New User");
 
         verify(userService).registration("newuser@test.ru", "New User", "password123");
+    }
+
+    @Test
+    void whenRegisterWithBlankEmail_thenReturnBadRequest() throws Exception {
+        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("", "ValidUsername", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/register",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле email должно быть заполнено");
+    }
+
+    @Test
+    void whenRegisterWithInvalidEmail_thenReturnBadRequest() throws Exception {
+        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("invalid-email", "ValidUsername", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/register",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Введите корректный email");
+    }
+
+    @Test
+    void whenRegisterWithBlankUsername_thenReturnBadRequest() throws Exception {
+        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/register",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле username должно быть заполнено");
+    }
+
+    @Test
+    void whenRegisterWithShortPassword_thenReturnBadRequest() throws Exception {
+        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "ValidUsername", "123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/auth/register",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Пароль должен содержать минимум 6 символов");
     }
 }

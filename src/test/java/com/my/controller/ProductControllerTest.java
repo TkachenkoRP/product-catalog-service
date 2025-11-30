@@ -143,6 +143,131 @@ class ProductControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void whenCreateProductWithBlankName_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("", 1L, 1L, 99.99, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле name должно быть заполнено");
+    }
+
+    @Test
+    void whenCreateProductWithShortName_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("A", 1L, 1L, 99.99, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Название товара должно быть от 2 до 200 символов");
+    }
+
+    @Test
+    void whenCreateProductWithNullCategoryId_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("Valid Name", null, 1L, 99.99, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле categoryId должно быть заполнено");
+    }
+
+    @Test
+    void whenCreateProductWithNegativeCategoryId_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("Valid Name", -1L, 1L, 99.99, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("ID категории должен быть положительным числом");
+    }
+
+    @Test
+    void whenCreateProductWithNullBrandId_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, null, 99.99, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле brandId должно быть заполнено");
+    }
+
+    @Test
+    void whenCreateProductWithNegativePrice_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, -10.0, 10);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Цена должна быть положительным числом");
+    }
+
+    @Test
+    void whenCreateProductWithNullStock_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, 99.99, null);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/product",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле stock должно быть заполнено");
+    }
+
+    @Test
+    void whenUpdateProductWithInvalidData_thenReturnBadRequest() throws Exception {
+        ProductRequestDto requestDto = new ProductRequestDto("A", -1L, -1L, -10.0, -5);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.PATCH,
+                "/api/product/1",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message())
+                .contains("Название товара должно быть от 2 до 200 символов")
+                .contains("ID категории должен быть положительным числом")
+                .contains("ID бренда должен быть положительным числом")
+                .contains("Цена должна быть положительным числом")
+                .contains("Количество на складе должно быть положительным числом");
+    }
+
+    @Test
     void whenUpdateProduct_thenReturnUpdatedProduct() throws Exception {
         Long productId = 1L;
         ProductRequestDto requestDto = new ProductRequestDto("Updated Product", 2L, 2L, 199.99, 15);

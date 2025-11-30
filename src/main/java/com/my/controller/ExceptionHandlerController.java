@@ -6,10 +6,15 @@ import com.my.exception.CacheException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.exception.ProductCreationException;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class ExceptionHandlerController {
@@ -44,6 +49,19 @@ public class ExceptionHandlerController {
         return new ErrorResponseDto(e.getLocalizedMessage());
     }
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    public ErrorResponseDto notValid(MethodArgumentNotValidException e) {
+        BindingResult bindingResult = e.getBindingResult();
+        List<String> errorMessages = bindingResult.getAllErrors()
+                .stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .toList();
+
+        String errorMessage = String.join(";", errorMessages);
+
+        return new ErrorResponseDto(errorMessage);
+    }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)

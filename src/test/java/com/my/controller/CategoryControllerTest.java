@@ -163,6 +163,52 @@ class CategoryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void whenCreateCategoryWithBlankName_thenReturnBadRequest() throws Exception {
+        CategoryRequestDto requestDto = new CategoryRequestDto("");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/category",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле name должно быть заполнено");
+    }
+
+    @Test
+    void whenCreateCategoryWithShortName_thenReturnBadRequest() throws Exception {
+        CategoryRequestDto requestDto = new CategoryRequestDto("A");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/category",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Название категории должно быть от 2 до 100 символов");
+    }
+
+    @Test
+    void whenCreateCategoryWithLongName_thenReturnBadRequest() throws Exception {
+        String longName = "A".repeat(101);
+        CategoryRequestDto requestDto = new CategoryRequestDto(longName);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/category",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Название категории должно быть от 2 до 100 символов");
+    }
+
+    @Test
     void whenUpdateCategory_thenReturnUpdatedCategory() throws Exception {
         Long categoryId = 1L;
         CategoryRequestDto requestDto = new CategoryRequestDto("Updated Electronics");

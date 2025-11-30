@@ -1,11 +1,13 @@
 package com.my.controller;
 
 import com.my.annotation.Audition;
-import com.my.dto.UserRequestDto;
+import com.my.dto.UserLoginRequestDto;
+import com.my.dto.UserRegisterRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,7 +23,7 @@ public class AuthController {
     private final UserMapper userMapper;
 
     @PostMapping("/login")
-    public UserResponseDto login(@RequestBody UserRequestDto request) {
+    public UserResponseDto login(@RequestBody @Valid UserLoginRequestDto request) {
         User user = userService.login(request.email(), request.password());
         return userMapper.toDto(user);
     }
@@ -32,7 +34,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public UserResponseDto register(@RequestBody UserRequestDto request) {
+    public UserResponseDto register(@RequestBody @Valid UserRegisterRequestDto request) {
         User user = userService.registration(request.email(), request.username(), request.password());
         return userMapper.toDto(user);
     }

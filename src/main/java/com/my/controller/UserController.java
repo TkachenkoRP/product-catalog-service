@@ -6,7 +6,9 @@ import com.my.dto.UserResponseDto;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.service.UserService;
+import com.my.validation.ValidationGroups;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,7 +41,7 @@ public class UserController {
 
     @PatchMapping("/{id}")
     public UserResponseDto patch(@PathVariable("id") Long id,
-                                 @RequestBody UserRequestDto request) {
+                                 @RequestBody @Validated(ValidationGroups.Update.class) UserRequestDto request) {
         User entity = userMapper.toEntity(request);
         User updated = userService.update(id, entity);
         return userMapper.toDto(updated);

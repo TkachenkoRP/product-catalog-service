@@ -6,7 +6,9 @@ import com.my.dto.BrandResponseDto;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
 import com.my.service.BrandService;
+import com.my.validation.ValidationGroups;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,7 +41,7 @@ public class BrandController {
     }
 
     @PostMapping
-    public BrandResponseDto post(@RequestBody BrandRequestDto request) {
+    public BrandResponseDto post(@RequestBody @Validated(ValidationGroups.Create.class) BrandRequestDto request) {
         Brand entity = brandMapper.toEntity(request);
         Brand saved = brandService.save(entity);
         return brandMapper.toDto(saved);
@@ -47,7 +49,7 @@ public class BrandController {
 
     @PatchMapping("/{id}")
     public BrandResponseDto patch(@PathVariable("id") Long id,
-                                  @RequestBody BrandRequestDto request) {
+                                  @RequestBody @Validated(ValidationGroups.Update.class) BrandRequestDto request) {
         Brand entity = brandMapper.toEntity(request);
         Brand updated = brandService.update(id, entity);
         return brandMapper.toDto(updated);

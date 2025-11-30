@@ -7,7 +7,9 @@ import com.my.mapper.ProductMapper;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.service.ProductService;
+import com.my.validation.ValidationGroups;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -41,7 +43,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ProductResponseDto post(@RequestBody ProductRequestDto request) {
+    public ProductResponseDto post(@RequestBody @Validated(ValidationGroups.Create.class) ProductRequestDto request) {
         Product entity = productMapper.toEntity(request);
         Product saved = productService.save(entity);
         return productMapper.toDto(saved);
@@ -49,7 +51,7 @@ public class ProductController {
 
     @PatchMapping("/{id}")
     public ProductResponseDto patch(@PathVariable("id") Long id,
-                                    @RequestBody ProductRequestDto request) {
+                                    @RequestBody @Validated(ValidationGroups.Update.class) ProductRequestDto request) {
         Product entity = productMapper.toEntity(request);
         Product updated = productService.update(id, entity);
         return productMapper.toDto(updated);

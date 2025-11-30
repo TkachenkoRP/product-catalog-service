@@ -164,6 +164,52 @@ class BrandControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void whenCreateBrandWithBlankName_thenReturnBadRequest() throws Exception {
+        BrandRequestDto requestDto = new BrandRequestDto("");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/brand",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Поле name должно быть заполнено");
+    }
+
+    @Test
+    void whenCreateBrandWithShortName_thenReturnBadRequest() throws Exception {
+        BrandRequestDto requestDto = new BrandRequestDto("A");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/brand",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Название бренда должно быть от 2 до 100 символов");
+    }
+
+    @Test
+    void whenCreateBrandWithLongName_thenReturnBadRequest() throws Exception {
+        String longName = "A".repeat(101);
+        BrandRequestDto requestDto = new BrandRequestDto(longName);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/brand",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Название бренда должно быть от 2 до 100 символов");
+    }
+
+    @Test
     void whenUpdateBrand_thenReturnUpdatedBrand() throws Exception {
         Long brandId = 1L;
         BrandRequestDto requestDto = new BrandRequestDto("Updated Samsung");

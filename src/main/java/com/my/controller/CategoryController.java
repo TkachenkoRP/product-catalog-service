@@ -6,7 +6,9 @@ import com.my.dto.CategoryResponseDto;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.service.CategoryService;
+import com.my.validation.ValidationGroups;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -39,7 +41,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public CategoryResponseDto post(@RequestBody CategoryRequestDto request) {
+    public CategoryResponseDto post(@RequestBody @Validated(ValidationGroups.Create.class) CategoryRequestDto request) {
         Category entity = categoryMapper.toEntity(request);
         Category saved = categoryService.save(entity);
         return categoryMapper.toDto(saved);
@@ -47,7 +49,7 @@ public class CategoryController {
 
     @PatchMapping("/{id}")
     public CategoryResponseDto patch(@PathVariable("id") Long id,
-                                     @RequestBody CategoryRequestDto request) {
+                                     @RequestBody @Validated(ValidationGroups.Update.class) CategoryRequestDto request) {
         Category entity = categoryMapper.toEntity(request);
         Category updated = categoryService.update(id, entity);
         return categoryMapper.toDto(updated);

@@ -149,6 +149,67 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    void whenUpdateUserWithInvalidEmail_thenReturnBadRequest() throws Exception {
+        UserRequestDto requestDto = new UserRequestDto("invalid-email", "ValidUsername", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.PATCH,
+                "/api/user/1",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Введите корректный email");
+    }
+
+    @Test
+    void whenUpdateUserWithShortUsername_thenReturnBadRequest() throws Exception {
+        UserRequestDto requestDto = new UserRequestDto("valid@email.com", "Ab", "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.PATCH,
+                "/api/user/1",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Имя пользователя должно быть от 3 до 50 символов");
+    }
+
+    @Test
+    void whenUpdateUserWithLongUsername_thenReturnBadRequest() throws Exception {
+        String longUsername = "A".repeat(51);
+        UserRequestDto requestDto = new UserRequestDto("valid@email.com", longUsername, "password123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.PATCH,
+                "/api/user/1",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Имя пользователя должно быть от 3 до 50 символов");
+    }
+
+    @Test
+    void whenUpdateUserWithShortPassword_thenReturnBadRequest() throws Exception {
+        UserRequestDto requestDto = new UserRequestDto("valid@email.com", "ValidUsername", "123");
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.PATCH,
+                "/api/user/1",
+                requestDto,
+                HttpStatus.BAD_REQUEST
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Пароль должен содержать минимум 6 символов");
+    }
+
+    @Test
     void whenDeleteUser_thenReturnSuccess() throws Exception {
         Long userId = 1L;
         when(userService.delete(userId)).thenReturn(true);
