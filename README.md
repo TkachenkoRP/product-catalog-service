@@ -9,12 +9,12 @@
 
 * Java 17
 * Maven
-* Jakarta Servlet
+* Spring MVC
+* Spring AOP
 * MapStruct
 * JDBC
 * PostgreSQL
 * Liquibase
-* JDBC
 * Jackson
 * AssertJ
 * JUnit 5
@@ -26,21 +26,21 @@
 
 ### Аутентификация и авторизация
 
-- Регистрация новых пользователей (`/auth?action=register`)
-- Вход в систему (`/auth?action=login`)
-- Выход из системы (`/auth?action=logout`)
+- Регистрация новых пользователей (`/api/auth/register`)
+- Вход в систему (`/api/auth/login`)
+- Выход из системы (`/api/auth/logout`)
 - Валидация учетных данных
 
 ### Управление пользователями
 
-- Просмотр списка пользователей (`GET /user`)
-- Просмотр профиля пользователя по ID (`GET /user?id={id}`)
-- Обновление данных пользователя (`PUT /user?id={id}`)
-- Удаление пользователей (`DELETE /user?id={id}`)
+- Просмотр списка пользователей (`GET /api/user`)
+- Просмотр профиля пользователя по ID (`GET /api/user/{id}`)
+- Обновление данных пользователя (`PUT /api/user/{id}`)
+- Удаление пользователей (`DELETE /api/user/{id}`)
 
 ### Управление товарами
 
-- CRUD операции с товарами (`GET/POST/PUT/DELETE /product`)
+- CRUD операции с товарами (`GET/POST/PUT/DELETE /api/product`)
 - Фильтрация товаров по различным критериям:
     - Категория (`categoryId`)
     - Бренд (`brandId`)
@@ -50,8 +50,8 @@
 
 ### Управление справочниками
 
-- Категории - CRUD операции (`/category`)
-- Бренды - CRUD операции (`/brand`)
+- Категории - CRUD операции (`/api/category`)
+- Бренды - CRUD операции (`/api/brand`)
 - Проверка уникальности названий категорий и брендов
 - Защита от удаления используемых в товарах категорий и брендов
 
@@ -62,28 +62,6 @@
 - Все запросы с телом используют JSON формат
 - Параметры передаются через query parameters
 - Стандартные HTTP методы: GET, POST, PUT, DELETE
-
-### Формат ответов
-
-```json
-{
-  "success": true,
-  "data": {
-    ...
-  },
-  "message": "Опциональное сообщение"
-}
-```
-
-или при ошибке:
-
-```json
-{
-  "success": false,
-  "data": null,
-  "message": "Сообщение об ошибке"
-}
-```
 
 ## База данных
 
@@ -97,6 +75,11 @@
 - Настройте подключение к PostgreSQL в конфигурации
 - Запустите приложение на сервере приложений (Tomcat/Jetty)
 - Приложение автоматически создаст необходимые таблицы через Liquibase
+
+## Документация API
+
+Документацию API можно найти по
+ссылке [http://localhost:8080/product_catalog_service/swagger-ui/index.html](http://localhost:8080/product_catalog_service/swagger-ui/index.html)
 
 ## Дополнительная информация
 
