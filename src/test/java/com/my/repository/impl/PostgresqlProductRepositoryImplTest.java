@@ -8,6 +8,7 @@ import com.my.repository.AbstractPostgresqlRepositoryTest;
 import com.my.repository.BrandRepository;
 import com.my.repository.CategoryRepository;
 import com.my.repository.ProductRepository;
+import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,17 +34,23 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     void whenGetAllProducts_thenReturnAllProducts() {
         List<Product> products = productRepository.getAll(null);
 
-        assertThat(products)
+        SoftAssertions softly = new SoftAssertions();
+        softly.assertThat(products)
                 .isNotNull()
-                .hasSize(18)
-                .allSatisfy(product -> {
-                    assertThat(product.getId()).isNotNull();
-                    assertThat(product.getName()).isNotBlank();
-                    assertThat(product.getCategoryId()).isNotNull();
-                    assertThat(product.getBrandId()).isNotNull();
-                    assertThat(product.getPrice()).isPositive();
-                    assertThat(product.getStock()).isNotNull();
-                });
+                .hasSize(18);
+
+        if (products != null) {
+            for (Product product : products) {
+                softly.assertThat(product.getId()).isNotNull();
+                softly.assertThat(product.getName()).isNotBlank();
+                softly.assertThat(product.getCategoryId()).isNotNull();
+                softly.assertThat(product.getBrandId()).isNotNull();
+                softly.assertThat(product.getPrice()).isPositive();
+                softly.assertThat(product.getStock()).isNotNull();
+            }
+        }
+
+        softly.assertAll();
     }
 
     @Test
