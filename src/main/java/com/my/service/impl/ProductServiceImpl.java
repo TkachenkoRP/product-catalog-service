@@ -2,11 +2,13 @@ package com.my.service.impl;
 
 import com.my.annotation.Audition;
 import com.my.annotation.Loggable;
+import com.my.exception.AccessDeniedException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
+import com.my.security.UserManager;
 import com.my.service.CacheService;
 import com.my.service.ProductService;
 import com.my.util.CacheKeyGenerator;
@@ -59,6 +61,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product save(Product product) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         Product saved = productRepository.save(product);
         cacheService.invalidate(CacheKeyGenerator.generateAllProductsKey());
         return saved;
@@ -66,6 +71,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product update(Long id, Product sourceProduct) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         Product updatedProduct = getById(id);
         productMapper.updateProduct(sourceProduct, updatedProduct);
         Product updated = productRepository.update(updatedProduct);
@@ -78,6 +86,9 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public boolean deleteById(Long id) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         boolean success = productRepository.deleteById(id);
         if (success) {
             cacheService.invalidate(CacheKeyGenerator.generateProductKey(id));

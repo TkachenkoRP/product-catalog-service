@@ -1,11 +1,13 @@
 package com.my.service.impl;
 
+import com.my.exception.AccessDeniedException;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.repository.CategoryRepository;
+import com.my.security.UserManager;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.service.CategoryService;
@@ -54,6 +56,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category save(Category category) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         if (existsByName(category.getName())) {
             throw new AlreadyExistException(category.getName() + " уже существует");
         }
@@ -64,6 +69,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public Category update(Long id, Category sourceCategory) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         Category updatedCategory = getById(id);
         if (existsByName(sourceCategory.getName())) {
             throw new AlreadyExistException(sourceCategory.getName() + " уже существует");
@@ -79,6 +87,9 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public boolean deleteById(Long id) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         if (validationService.categoryHasProducts(id)) {
             throw new EntityHasReferencesException("категорию", id);
         }

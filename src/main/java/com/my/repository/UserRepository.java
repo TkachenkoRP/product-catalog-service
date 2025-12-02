@@ -1,6 +1,7 @@
 package com.my.repository;
 
 import com.my.model.User;
+import com.my.model.UserRole;
 
 import java.util.List;
 import java.util.Optional;
@@ -64,4 +65,11 @@ public interface UserRepository {
      * @return Optional с пользователем, если найден с указанными учетными данными, иначе пустой Optional
      */
     Optional<User> getByEmailAndPassword(String email, String password);
+
+    /**
+     * Найти всех пользователей с указанной ролью
+     * @param role роль пользователя
+     * @return список пользователей
+     */
+    List<User> findByRole(UserRole role);
 }

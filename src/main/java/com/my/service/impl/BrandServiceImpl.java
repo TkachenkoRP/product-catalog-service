@@ -1,11 +1,14 @@
 package com.my.service.impl;
 
+import com.my.exception.AccessDeniedException;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
+import com.my.mapper.UserMapper;
 import com.my.model.Brand;
 import com.my.repository.BrandRepository;
+import com.my.security.UserManager;
 import com.my.service.BrandService;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
@@ -54,6 +57,9 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public Brand save(Brand brand) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         if (existsByName(brand.getName())) {
             throw new AlreadyExistException(brand.getName() + " уже существует");
         }
@@ -64,6 +70,9 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public Brand update(Long id, Brand sourceBrand) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         Brand updatedBrand = getById(id);
         if (existsByName(sourceBrand.getName())) {
             throw new AlreadyExistException(sourceBrand.getName() + " уже существует");
@@ -79,6 +88,9 @@ public class BrandServiceImpl implements BrandService {
 
     @Override
     public boolean deleteById(Long id) {
+        if (!UserManager.isAdmin()) {
+            throw new AccessDeniedException("Требуются права администратора");
+        }
         if (validationService.brandHasProducts(id)) {
             throw new EntityHasReferencesException("бренд", id);
         }

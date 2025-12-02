@@ -1,10 +1,12 @@
 package com.my.controller;
 
 import com.my.dto.ErrorResponseDto;
+import com.my.exception.AccessDeniedException;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.CacheException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
+import com.my.exception.LastAdminException;
 import com.my.exception.ProductCreationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
@@ -61,6 +63,18 @@ public class ExceptionHandlerController {
         String errorMessage = String.join(";", errorMessages);
 
         return new ErrorResponseDto(errorMessage);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    public ErrorResponseDto handleAccessDenied(AccessDeniedException e) {
+        return new ErrorResponseDto(e.getLocalizedMessage());
+    }
+
+    @ExceptionHandler(LastAdminException.class)
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    public ErrorResponseDto handleLastAdmin(LastAdminException e) {
+        return new ErrorResponseDto("Ошибка изменения прав: " + e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

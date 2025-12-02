@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.UserManagerMockHelper;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
 import com.my.model.Product;
@@ -138,6 +139,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenSaveProduct_thenReturnSavedProductAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Product newProduct = new Product("New Product", 1L, 1L, 99.99, 10);
         Product savedProduct = new Product(1L, "New Product", 1L, 1L, 99.99, 10);
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
@@ -153,6 +155,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenUpdateProduct_thenReturnUpdatedProductAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long productId = 1L;
         Product sourceProduct = new Product("Updated Product", 2L, 2L, 199.99, 15);
         Product existingProduct = new Product(productId, "Original Product", 1L, 1L, 99.99, 10);
@@ -173,6 +176,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenDeleteProductSuccessfully_thenReturnTrueAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long productId = 1L;
         String productCacheKey = CacheKeyGenerator.generateProductKey(productId);
         String allProductsCacheKey = CacheKeyGenerator.generateAllProductsKey();
@@ -189,6 +193,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenDeleteProductFails_thenReturnFalseAndDoNotInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long productId = 1L;
         when(productRepository.deleteById(productId)).thenReturn(false);
 

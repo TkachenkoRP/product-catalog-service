@@ -40,6 +40,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
     private static final String DELETE_SQL = "DELETE FROM %s.user WHERE id = ?";
     private static final String EXISTS_BY_EMAIL_SQL = "SELECT COUNT(*) FROM %s.user WHERE email = ?";
     private static final String SELECT_BY_EMAIL_PASSWORD_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE email = ? AND password = ?";
+    private static final String SELECT_BY_ROLE_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE role = ?";
 
     @Override
     public List<User> getAll() {
@@ -109,6 +110,12 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         } catch (DataAccessException e) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public List<User> findByRole(UserRole role) {
+        String sql = String.format(SELECT_BY_ROLE_SQL, schema);
+        return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToUser(rs), role.name());
     }
 
     private User mapResultSetToUser(ResultSet rs) throws SQLException {

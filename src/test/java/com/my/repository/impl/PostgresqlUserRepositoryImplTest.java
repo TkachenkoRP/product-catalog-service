@@ -3,6 +3,7 @@ package com.my.repository.impl;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.instancio.Select.field;
 
 class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
     private final PostgresqlUserRepositoryImpl userRepository;
@@ -178,5 +180,49 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
         } catch (RuntimeException e) {
             assertThat(e).hasMessageContaining("user_email_key");
         }
+    }
+
+    @Test
+    void whenFindByRole_withAdminRole_thenReturnAllAdmins() {
+        User admin1 = Instancio.of(User.class)
+                .ignore(field(User::getId))
+                .set(field(User::getRole), UserRole.ROLE_ADMIN)
+                .create();
+        User admin2 = Instancio.of(User.class)
+                .ignore(field(User::getId))
+                .set(field(User::getRole), UserRole.ROLE_ADMIN)
+                .create();
+        userRepository.save(admin1);
+        userRepository.save(admin2);
+
+        List<User> admins = userRepository.findByRole(UserRole.ROLE_ADMIN);
+
+        assertThat(admins)
+                .isNotNull()
+                .hasSizeGreaterThanOrEqualTo(3)
+                .extracting(User::getRole)
+                .containsOnly(UserRole.ROLE_ADMIN);
+    }
+
+    @Test
+    void whenFindByRole_withUserRole_thenReturnAllUsers() {
+        User user1 = Instancio.of(User.class)
+                .ignore(field(User::getId))
+                .set(field(User::getRole), UserRole.ROLE_USER)
+                .create();
+        User user2 = Instancio.of(User.class)
+                .ignore(field(User::getId))
+                .set(field(User::getRole), UserRole.ROLE_USER)
+                .create();
+        userRepository.save(user1);
+        userRepository.save(user2);
+
+        List<User> users = userRepository.findByRole(UserRole.ROLE_USER);
+
+        assertThat(users)
+                .isNotNull()
+                .hasSizeGreaterThanOrEqualTo(3)
+                .extracting(User::getRole)
+                .containsOnly(UserRole.ROLE_USER);
     }
 }

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.my.dto.ErrorResponseDto;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
+import com.my.exception.AccessDeniedException;
 import com.my.exception.EntityNotFoundException;
+import com.my.exception.LastAdminException;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.model.UserRole;
@@ -222,5 +224,171 @@ class UserControllerTest extends AbstractControllerTest {
 
         assertThat(response.getContentAsString()).isEmpty();
         verify(userService).delete(userId);
+    }
+
+    @Test
+    void whenPromoteUserToAdmin_thenReturnPromotedUser() throws Exception {
+        Long userId = 2L;
+        User promotedUser = new User(userId, "user@test.ru", "Regular User", "password", UserRole.ROLE_ADMIN);
+        UserResponseDto responseDto = new UserResponseDto(userId, "user@test.ru", "Regular User", "ROLE_ADMIN");
+
+        when(userService.promoteToAdmin(userId)).thenReturn(promotedUser);
+        when(userMapper.toDto(promotedUser)).thenReturn(responseDto);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/promote",
+                HttpStatus.OK
+        );
+
+        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+
+        assertThat(result)
+                .extracting(
+                        UserResponseDto::id,
+                        UserResponseDto::email,
+                        UserResponseDto::username,
+                        UserResponseDto::role
+                )
+                .containsExactly(userId, "user@test.ru", "Regular User", "ROLE_ADMIN");
+
+        verify(userService).promoteToAdmin(userId);
+    }
+
+    @Test
+    void whenPromoteNonExistingUserToAdmin_thenReturnNotFound() throws Exception {
+        Long nonExistingUserId = 999L;
+        when(userService.promoteToAdmin(nonExistingUserId))
+                .thenThrow(new EntityNotFoundException("Пользователь не найден"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + nonExistingUserId + "/promote",
+                HttpStatus.NOT_FOUND
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Пользователь не найден");
+
+        verify(userService).promoteToAdmin(nonExistingUserId);
+    }
+
+    @Test
+    void whenPromoteUserToAdminWithoutAdminRights_thenReturnForbidden() throws Exception {
+        Long userId = 2L;
+        when(userService.promoteToAdmin(userId))
+                .thenThrow(new AccessDeniedException("Требуются права администратора"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/promote",
+                HttpStatus.FORBIDDEN
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Требуются права администратора");
+
+        verify(userService).promoteToAdmin(userId);
+    }
+
+    @Test
+    void whenDemoteUserFromAdmin_thenReturnDemotedUser() throws Exception {
+        Long userId = 1L;
+        User demotedUser = new User(userId, "admin@test.ru", "Admin User", "password", UserRole.ROLE_USER);
+        UserResponseDto responseDto = new UserResponseDto(userId, "admin@test.ru", "Admin User", "ROLE_USER");
+
+        when(userService.demoteFromAdmin(userId)).thenReturn(demotedUser);
+        when(userMapper.toDto(demotedUser)).thenReturn(responseDto);
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/demote",
+                HttpStatus.OK
+        );
+
+        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+
+        assertThat(result)
+                .extracting(
+                        UserResponseDto::id,
+                        UserResponseDto::email,
+                        UserResponseDto::username,
+                        UserResponseDto::role
+                )
+                .containsExactly(userId, "admin@test.ru", "Admin User", "ROLE_USER");
+
+        verify(userService).demoteFromAdmin(userId);
+    }
+
+    @Test
+    void whenDemoteNonExistingUserFromAdmin_thenReturnNotFound() throws Exception {
+        Long nonExistingUserId = 999L;
+        when(userService.demoteFromAdmin(nonExistingUserId))
+                .thenThrow(new EntityNotFoundException("Пользователь не найден"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + nonExistingUserId + "/demote",
+                HttpStatus.NOT_FOUND
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Пользователь не найден");
+
+        verify(userService).demoteFromAdmin(nonExistingUserId);
+    }
+
+    @Test
+    void whenDemoteUserFromAdminWithoutAdminRights_thenReturnForbidden() throws Exception {
+        Long userId = 1L;
+        when(userService.demoteFromAdmin(userId))
+                .thenThrow(new AccessDeniedException("Требуются права администратора"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/demote",
+                HttpStatus.FORBIDDEN
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Требуются права администратора");
+
+        verify(userService).demoteFromAdmin(userId);
+    }
+
+    @Test
+    void whenDemoteSelfFromAdmin_thenReturnForbidden() throws Exception {
+        Long userId = 1L;
+        when(userService.demoteFromAdmin(userId))
+                .thenThrow(new AccessDeniedException("Нельзя снять права администратора у самого себя"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/demote",
+                HttpStatus.FORBIDDEN
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Нельзя снять права администратора у самого себя");
+
+        verify(userService).demoteFromAdmin(userId);
+    }
+
+    @Test
+    void whenDemoteLastAdmin_thenReturnConflict() throws Exception {
+        Long userId = 1L;
+        when(userService.demoteFromAdmin(userId))
+                .thenThrow(new LastAdminException("Нельзя лишить прав последнего администратора"));
+
+        MockHttpServletResponse response = performRequest(
+                HttpMethod.POST,
+                "/api/user/" + userId + "/demote",
+                HttpStatus.CONFLICT
+        );
+
+        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
+        assertThat(error.message()).contains("Ошибка изменения прав: Нельзя лишить прав последнего администратора");
+
+        verify(userService).demoteFromAdmin(userId);
     }
 }

@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.UserManagerMockHelper;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
@@ -125,6 +126,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenSaveNewCategory_thenReturnSavedCategoryAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Category newCategory = new Category("Sports");
         Category savedCategory = new Category(1L, "Sports");
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
@@ -141,6 +143,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenSaveExistingCategory_thenThrowException() {
+        UserManagerMockHelper.setAdminUser();
         Category existingCategory = new Category("Electronics");
         when(categoryRepository.existsByNameIgnoreCase("Electronics")).thenReturn(true);
 
@@ -153,6 +156,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenUpdateCategory_thenReturnUpdatedCategoryAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
         Category sourceCategory = new Category("Updated Electronics");
         Category existingCategory = new Category(categoryId, "Electronics");
@@ -174,6 +178,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenUpdateCategoryWithExistingName_thenThrowException() {
+        UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
         Category sourceCategory = new Category("Clothing");
         Category existingCategory = new Category(categoryId, "Electronics");
@@ -190,6 +195,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenDeleteCategoryWithoutProducts_thenReturnTrueAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
         String categoryCacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
         String allCategoriesCacheKey = CacheKeyGenerator.generateAllCategoriesKey();
@@ -207,6 +213,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenDeleteCategoryFails_thenReturnFalseAndDoNotInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
 
         when(validationService.categoryHasProducts(categoryId)).thenReturn(false);
@@ -221,6 +228,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenDeleteCategoryWithProducts_thenReturnFalse() {
+        UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
         when(validationService.categoryHasProducts(categoryId)).thenReturn(true);
 

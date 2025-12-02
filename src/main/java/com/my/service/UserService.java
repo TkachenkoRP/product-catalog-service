@@ -74,4 +74,27 @@ public interface UserService {
      * @return {@code true} если email доступен, {@code false} если уже занят
      */
     boolean isEmailAvailable(String email);
+
+    /**
+     * Назначить пользователя администратором
+     *
+     * @param userId ID пользователя
+     * @return обновленный пользователь
+     */
+    User promoteToAdmin(Long userId);
+
+    /**
+     * Лишить пользователя прав администратора
+     *
+     * @param userId ID пользователя
+     * @return обновленный пользователь
+     */
+    User demoteFromAdmin(Long userId);
+
+    /**
+     * Получить всех администраторов
+     *
+     * @return список администраторов
+     */
+    List<User> getAllAdmins();
 }

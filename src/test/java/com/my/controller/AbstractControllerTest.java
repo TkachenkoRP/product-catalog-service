@@ -21,6 +21,7 @@ import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.PATCH;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpMethod.PUT;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public abstract class AbstractControllerTest {
     protected MockMvc mockMvc;
@@ -76,7 +77,7 @@ public abstract class AbstractControllerTest {
         }
 
         MockHttpServletResponse response = mockMvc.perform(requestBuilder)
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.status().is(expectedStatus.value()))
+                .andExpect(status().is(expectedStatus.value()))
                 .andReturn()
                 .getResponse();
         response.setCharacterEncoding("UTF-8");

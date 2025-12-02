@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.UserManagerMockHelper;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
@@ -16,7 +17,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,6 +109,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenSaveNewBrand_thenReturnSavedBrandAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Brand newBrand = new Brand("Sony");
         Brand savedBrand = new Brand(1L, "Sony");
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
@@ -125,6 +126,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenSaveExistingBrand_thenThrowException() {
+        UserManagerMockHelper.setAdminUser();
         Brand existingBrand = new Brand("Samsung");
         when(brandRepository.existsByNameIgnoreCase("Samsung")).thenReturn(true);
 
@@ -137,6 +139,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenUpdateBrand_thenReturnUpdatedBrandAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
         Brand sourceBrand = new Brand("Updated Samsung");
         Brand existingBrand = new Brand(brandId, "Samsung");
@@ -158,6 +161,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenDeleteBrandWithoutProducts_thenReturnTrueAndInvalidateCache() {
+        UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
         String brandCacheKey = CacheKeyGenerator.generateBrandKey(brandId);
         String allBrandsCacheKey = CacheKeyGenerator.generateAllBrandsKey();
@@ -175,6 +179,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenDeleteBrandWithProducts_thenReturnFalse() {
+        UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
         when(validationService.brandHasProducts(brandId)).thenReturn(true);
 
