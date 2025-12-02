@@ -9,18 +9,19 @@ import com.my.repository.CategoryRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -50,10 +51,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnCategoriesFromRepositoryAndCache() {
-        List<Category> expectedCategories = Arrays.asList(
-                new Category(1L, "Electronics"),
-                new Category(2L, "Clothing")
-        );
+        List<Category> expectedCategories = Instancio.ofList(Category.class).create();
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
         when(categoryRepository.getAll()).thenReturn(expectedCategories);
@@ -69,10 +67,7 @@ class CategoryServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnCategoriesFromCache() {
-        List<Category> expectedCategories = Arrays.asList(
-                new Category(1L, "Electronics"),
-                new Category(2L, "Clothing")
-        );
+        List<Category> expectedCategories = Instancio.ofList(Category.class).create();
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
         when(cacheService.getList(cacheKey, Category.class)).thenReturn(expectedCategories);
@@ -88,7 +83,7 @@ class CategoryServiceImplTest {
     @Test
     void whenGetExistingCategoryById_thenReturnCategoryFromRepositoryAndCache() {
         Long categoryId = 1L;
-        Category expectedCategory = new Category(categoryId, "Electronics");
+        Category expectedCategory = Instancio.of(Category.class).set(field(Category::getId), categoryId).create();
         String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
         when(cacheService.get(cacheKey, Category.class)).thenReturn(null);
@@ -105,7 +100,7 @@ class CategoryServiceImplTest {
     @Test
     void whenGetExistingCategoryById_thenReturnCategoryFromCache() {
         Long categoryId = 1L;
-        Category expectedCategory = new Category(categoryId, "Electronics");
+        Category expectedCategory = Instancio.of(Category.class).set(field(Category::getId), categoryId).create();
         String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
         when(cacheService.get(cacheKey, Category.class)).thenReturn(expectedCategory);

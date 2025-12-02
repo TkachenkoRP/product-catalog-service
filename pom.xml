@@ -35,6 +35,7 @@
         <jakarta.validation.version>4.0.0-M1</jakarta.validation.version>
         <jakarta.el.version>6.1.0-M1</jakarta.el.version>
         <springdoc.version>2.8.14</springdoc.version>
+        <instancio.version>5.5.1</instancio.version>
     </properties>
 
     <dependencies>
@@ -184,6 +185,12 @@
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.instancio</groupId>
+            <artifactId>instancio-junit</artifactId>
+            <version>${instancio.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

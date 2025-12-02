@@ -9,6 +9,7 @@ import com.my.repository.BrandRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,10 +51,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnBrandsFromRepositoryAndCache() {
-        List<Brand> expectedBrands = Arrays.asList(
-                new Brand(1L, "Samsung"),
-                new Brand(2L, "Apple")
-        );
+        List<Brand> expectedBrands = Instancio.ofList(Brand.class).create();
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(cacheService.getList(cacheKey, Brand.class)).thenReturn(null);
@@ -69,10 +67,7 @@ class BrandServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnBrandsFromCache() {
-        List<Brand> expectedBrands = Arrays.asList(
-                new Brand(1L, "Samsung"),
-                new Brand(2L, "Apple")
-        );
+        List<Brand> expectedBrands = Instancio.ofList(Brand.class).create();
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(cacheService.getList(cacheKey, Brand.class)).thenReturn(expectedBrands);

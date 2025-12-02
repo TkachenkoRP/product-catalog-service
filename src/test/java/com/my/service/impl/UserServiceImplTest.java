@@ -7,6 +7,7 @@ import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
 import com.my.security.UserManager;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -119,10 +119,7 @@ class UserServiceImplTest {
 
     @Test
     void whenGetAllUsers_thenReturnAllUsers() {
-        List<User> expectedUsers = Arrays.asList(
-                new User(1L, "admin@test.ru", "Admin", "admin123", UserRole.ROLE_ADMIN),
-                new User(2L, "user@test.ru", "User", "user123", UserRole.ROLE_USER)
-        );
+        List<User> expectedUsers = Instancio.ofList(User.class).create();
         when(userRepository.getAll()).thenReturn(expectedUsers);
 
         List<User> result = userService.getAll();

@@ -7,13 +7,13 @@ import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
 import com.my.service.CacheService;
 import com.my.util.CacheKeyGenerator;
+import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -46,10 +46,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenGetAllWithoutFilters_thenFetchFromRepositoryAndCache() {
-        List<Product> expectedProducts = Arrays.asList(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10),
-                new Product(2L, "Product 2", 1L, 2L, 149.99, 5)
-        );
+        List<Product> expectedProducts = Instancio.ofList(Product.class).create();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         when(cacheService.getList(cacheKey, Product.class)).thenReturn(null);
@@ -65,10 +62,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenGetAllWithoutFilters_thenReturnFromCache() {
-        List<Product> expectedProducts = Arrays.asList(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10),
-                new Product(2L, "Product 2", 1L, 2L, 149.99, 5)
-        );
+        List<Product> expectedProducts = Instancio.ofList(Product.class).create();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         when(cacheService.getList(cacheKey, Product.class)).thenReturn(expectedProducts);
