@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
@@ -20,6 +21,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final SequenceGenerator sequenceGenerator;
+    private final BrandRowMapper brandRowMapper = new BrandRowMapper();
 
     @Value("${datasource.schema}")
     private String schema;
@@ -48,14 +50,19 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
     @Override
     public List<Brand> getAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
-        return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToBrand(rs));
+        return jdbcTemplate.query(
+                sql,
+                brandRowMapper);
     }
 
     @Override
     public Optional<Brand> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
         try {
-            Brand brand = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToBrand(rs), id);
+            Brand brand = jdbcTemplate.queryForObject(
+                    sql,
+                    brandRowMapper,
+                    id);
             return Optional.ofNullable(brand);
         } catch (DataAccessException e) {
             return Optional.empty();
@@ -98,10 +105,13 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return count != null && count > 0;
     }
 
-    private Brand mapResultSetToBrand(ResultSet rs) throws SQLException {
-        return new Brand(
-                rs.getLong("id"),
-                rs.getString("name")
-        );
+    private static class BrandRowMapper implements RowMapper<Brand> {
+        @Override
+        public Brand mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new Brand(
+                    rs.getLong("id"),
+                    rs.getString("name")
+            );
+        }
     }
 }
