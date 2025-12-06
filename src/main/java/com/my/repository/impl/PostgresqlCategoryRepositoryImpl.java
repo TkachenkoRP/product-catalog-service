@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -45,12 +46,14 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
         this.sequenceGenerator = sequenceGenerator;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Category> getAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToCategory(rs));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<Category> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
@@ -62,6 +65,7 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
         }
     }
 
+    @Transactional
     @Override
     public Category save(Category category) {
         String sql = String.format(INSERT_SQL, schema);
@@ -74,6 +78,7 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
         return category;
     }
 
+    @Transactional
     @Override
     public Category update(Category category) {
         String sql = String.format(UPDATE_SQL, schema);
@@ -84,6 +89,7 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
         return category;
     }
 
+    @Transactional
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
@@ -91,6 +97,7 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
         return update > 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean existsByNameIgnoreCase(String categoryName) {
         String sql = String.format(EXISTS_BY_NAME_SQL, schema);

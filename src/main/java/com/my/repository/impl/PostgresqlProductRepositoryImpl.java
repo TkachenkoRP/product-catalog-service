@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -52,6 +53,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
     private static final String AND_JOIN = " AND ";
     private static final String ORDER_BY_ID = " ORDER BY id";
 
+    @Transactional(readOnly = true)
     @Override
     public List<Product> getAll(ProductFilter filter) {
         StringBuilder sql = new StringBuilder(
@@ -93,6 +95,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> mapResultSetToProduct(rs), parameters.toArray());
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<Product> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
@@ -104,6 +107,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         }
     }
 
+    @Transactional
     @Override
     public Product save(Product product) {
         String sql = String.format(INSERT_SQL, schema);
@@ -131,6 +135,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         return product;
     }
 
+    @Transactional
     @Override
     public Product update(Product product) {
         String sql = String.format(UPDATE_SQL, schema);
@@ -156,6 +161,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         return product;
     }
 
+    @Transactional
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
@@ -163,12 +169,14 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         return update > 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean existsByBrandId(Long brandId) {
         String sql = String.format(EXIST_BY_BRAND_ID, schema);
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, brandId));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean existsByCategoryId(Long categoryId) {
         String sql = String.format(EXIST_BY_CATEGORY_ID, schema);

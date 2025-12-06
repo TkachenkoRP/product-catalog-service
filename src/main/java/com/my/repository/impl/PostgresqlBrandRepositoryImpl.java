@@ -9,6 +9,7 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -47,6 +48,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         this.sequenceGenerator = sequenceGenerator;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<Brand> getAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
@@ -55,6 +57,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
                 brandRowMapper);
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<Brand> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
@@ -69,6 +72,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         }
     }
 
+    @Transactional
     @Override
     public Brand save(Brand brand) {
         String sql = String.format(INSERT_SQL, schema);
@@ -81,6 +85,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return brand;
     }
 
+    @Transactional
     @Override
     public Brand update(Brand brand) {
         String sql = String.format(UPDATE_SQL, schema);
@@ -91,6 +96,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return brand;
     }
 
+    @Transactional
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
@@ -98,6 +104,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return update > 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean existsByNameIgnoreCase(String brandName) {
         String sql = String.format(EXISTS_BY_NAME_SQL, schema);
@@ -105,6 +112,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return count != null && count > 0;
     }
 
+    @Transactional(readOnly = true)
     private static class BrandRowMapper implements RowMapper<Brand> {
         @Override
         public Brand mapRow(ResultSet rs, int rowNum) throws SQLException {

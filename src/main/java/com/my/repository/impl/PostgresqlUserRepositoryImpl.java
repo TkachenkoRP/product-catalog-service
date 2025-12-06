@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.ResultSet;
@@ -42,12 +43,14 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
     private static final String SELECT_BY_EMAIL_PASSWORD_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE email = ? AND password = ?";
     private static final String SELECT_BY_ROLE_SQL = "SELECT id, email, username, password, role FROM %s.user WHERE role = ?";
 
+    @Transactional(readOnly = true)
     @Override
     public List<User> getAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToUser(rs));
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<User> getById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
@@ -59,6 +62,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         }
     }
 
+    @Transactional
     @Override
     public User save(User user) {
         String sql = String.format(INSERT_SQL, schema);
@@ -74,6 +78,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         return user;
     }
 
+    @Transactional
     @Override
     public User update(User user) {
         String sql = String.format(UPDATE_SQL, schema);
@@ -87,6 +92,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         return user;
     }
 
+    @Transactional
     @Override
     public boolean deleteById(Long id) {
         String sql = String.format(DELETE_SQL, schema);
@@ -94,6 +100,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         return update > 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public boolean isPresentByEmail(String email) {
         String sql = String.format(EXISTS_BY_EMAIL_SQL, schema);
@@ -101,6 +108,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         return count != null && count > 0;
     }
 
+    @Transactional(readOnly = true)
     @Override
     public Optional<User> getByEmailAndPassword(String email, String password) {
         String sql = String.format(SELECT_BY_EMAIL_PASSWORD_SQL, schema);
@@ -112,6 +120,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public List<User> findByRole(UserRole role) {
         String sql = String.format(SELECT_BY_ROLE_SQL, schema);
