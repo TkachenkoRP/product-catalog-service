@@ -9,8 +9,7 @@
 
 * Java 17
 * Maven
-* Spring MVC
-* Spring AOP
+* Spring Boot
 * MapStruct
 * JDBC
 * PostgreSQL
@@ -21,6 +20,7 @@
 * Mockito
 * Testcontainers
 * Кеширование Redis
+* [Собственный стартер для логирования и аудита приложения](https://github.com/TkachenkoRP/audit-logging-starter)
 
 ## Функциональность
 
@@ -69,17 +69,18 @@
 - Миграции управляются через Liquibase
 - Автоматическое создание и обновление схемы при запуске
 
-## Запуск и развертывание
+## Инструкции по запуску
 
-- Убедитесь, что установлены Java 17 и Maven
-- Настройте подключение к PostgreSQL в конфигурации
-- Запустите приложение на сервере приложений (Tomcat/Jetty)
-- Приложение автоматически создаст необходимые таблицы через Liquibase
+1. Клонировать репозиторий из GitHub.
+2. Убедитесь, что у вас установлен Docker.
+3. Запустите `docker-compose -f docker/docker-compose.yml up` в директории проекта.
+4. Запустите приложение.
+5. Приложение будет доступно по адресу [http://localhost:8080](http://localhost:8080).
 
 ## Документация API
 
 Документацию API можно найти по
-ссылке [http://localhost:8080/product_catalog_service/swagger-ui/index.html](http://localhost:8080/product_catalog_service/swagger-ui/index.html)
+ссылке [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
 ## Дополнительная информация
 
