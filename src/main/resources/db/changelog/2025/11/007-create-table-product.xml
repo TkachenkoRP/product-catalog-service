@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="create-table-product" author="Rodion Tkachenko">
-        <createTable tableName="product" schemaName="catalog_schema">
+        <createTable tableName="product">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -16,13 +16,12 @@
             <column name="category_id" type="BIGINT">
                 <constraints nullable="false"
                              foreignKeyName="fk_product_category"
-                             referencedTableSchemaName=""
-                             references="catalog_schema.category(id)"/>
+                             references="category(id)"/>
             </column>
             <column name="brand_id" type="BIGINT">
                 <constraints nullable="false"
                              foreignKeyName="fk_product_brand"
-                             references="catalog_schema.brand(id)"/>
+                             references="brand(id)"/>
             </column>
             <column name="price" type="DECIMAL(10,2)">
                 <constraints nullable="false"/>
@@ -34,15 +33,13 @@
 
         <createIndex
                 indexName="idx_product_category"
-                tableName="product"
-                schemaName="catalog_schema">
+                tableName="product">
             <column name="category_id"/>
         </createIndex>
 
         <createIndex
                 indexName="idx_product_brand"
-                tableName="product"
-                schemaName="catalog_schema">
+                tableName="product">
             <column name="brand_id"/>
         </createIndex>
     </changeSet>

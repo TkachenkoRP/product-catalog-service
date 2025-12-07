@@ -8,25 +8,21 @@
     <changeSet id="add-sequence" author="Rodion Tkachenko">
         <createSequence
                 sequenceName="user_seq"
-                schemaName="catalog_schema"
                 startValue="1"
                 incrementBy="1"/>
 
         <createSequence
                 sequenceName="category_seq"
-                schemaName="catalog_schema"
                 startValue="1"
                 incrementBy="1"/>
 
         <createSequence
                 sequenceName="brand_seq"
-                schemaName="catalog_schema"
                 startValue="1"
                 incrementBy="1"/>
 
         <createSequence
                 sequenceName="product_seq"
-                schemaName="catalog_schema"
                 startValue="1"
                 incrementBy="1"/>
     </changeSet>

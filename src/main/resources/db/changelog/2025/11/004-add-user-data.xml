@@ -6,16 +6,16 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="add-user-data" author="Rodion Tkachenko" context="dev">
-        <insert schemaName="catalog_schema" tableName="user">
-            <column name="id" valueComputed="nextval('catalog_schema.user_seq')"/>
+        <insert tableName="user">
+            <column name="id" valueComputed="nextval('user_seq')"/>
             <column name="email" value="admin@my.ru"/>
             <column name="password" value="aDmIn"/>
             <column name="username" value="Administrator"/>
             <column name="role" value="ROLE_ADMIN"/>
         </insert>
 
-        <insert schemaName="catalog_schema" tableName="user">
-            <column name="id" valueComputed="nextval('catalog_schema.user_seq')"/>
+        <insert tableName="user">
+            <column name="id" valueComputed="nextval('user_seq')"/>
             <column name="email" value="user@my.ru"/>
             <column name="password" value="UsEr"/>
             <column name="username" value="User"/>

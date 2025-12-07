@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="create-table-category" author="Rodion Tkachenko">
-        <createTable tableName="category" schemaName="catalog_schema">
+        <createTable tableName="category">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

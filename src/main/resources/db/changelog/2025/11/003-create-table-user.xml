@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="create-table-user" author="Rodion Tkachenko">
-        <createTable tableName="user" schemaName="catalog_schema">
+        <createTable tableName="user">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>

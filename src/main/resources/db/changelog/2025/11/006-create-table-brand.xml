@@ -6,7 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="create-table-brand" author="Rodion Tkachenko">
-        <createTable tableName="brand" schemaName="catalog_schema">
+        <createTable tableName="brand">
             <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
