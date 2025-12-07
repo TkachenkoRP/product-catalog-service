@@ -24,7 +24,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
     private final SequenceGenerator sequenceGenerator;
     private final BrandRowMapper brandRowMapper = new BrandRowMapper();
 
-    @Value("${datasource.schema}")
+    @Value("${spring.datasource.hikari.schema}")
     private String schema;
 
     @Autowired

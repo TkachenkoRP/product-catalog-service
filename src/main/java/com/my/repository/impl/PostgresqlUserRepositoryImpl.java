@@ -23,7 +23,7 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
     private final JdbcTemplate jdbcTemplate;
     private final SequenceGenerator sequenceGenerator;
 
-    @Value("${datasource.schema}")
+    @Value("${spring.datasource.hikari.schema}")
     private String schema;
 
     @Autowired

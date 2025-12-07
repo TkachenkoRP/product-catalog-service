@@ -5,7 +5,6 @@ import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
-import com.my.mapper.UserMapper;
 import com.my.model.Brand;
 import com.my.repository.BrandRepository;
 import com.my.security.UserManager;

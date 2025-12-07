@@ -15,7 +15,7 @@ import javax.sql.DataSource;
 public class SequenceGenerator {
     private final JdbcTemplate jdbcTemplate;
 
-    @Value("${datasource.schema}")
+    @Value("${spring.datasource.hikari.schema}")
     private String schema;
 
     /**

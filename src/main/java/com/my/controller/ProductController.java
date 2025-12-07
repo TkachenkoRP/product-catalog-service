@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,7 +40,7 @@ public class ProductController {
     @Operation(summary = "Получить все продукты", description = "Возвращает список всех продуктов с возможностью фильтрации")
     @ApiResponse(responseCode = "200", description = "Успешное получение списка продуктов")
     @GetMapping
-    public List<ProductResponseDto> getAll(@ModelAttribute ProductFilter filter) {
+    public List<ProductResponseDto> getAll(@ParameterObject @ModelAttribute ProductFilter filter) {
         List<Product> categories = productService.getAll(filter);
         return productMapper.toDto(categories);
     }

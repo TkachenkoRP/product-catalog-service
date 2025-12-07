@@ -27,6 +27,7 @@ public class RedisConfig {
     public JedisPool jedisPool() {
         JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(128);
+        poolConfig.setJmxEnabled(false);
 
         return new JedisPool(poolConfig, host, port, timeout, password, database);
     }

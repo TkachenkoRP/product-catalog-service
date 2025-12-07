@@ -1,13 +1,16 @@
-datasource:
-  driver-class-name: org.postgresql.Driver
-  url: jdbc:postgresql://localhost:5432/catalog_service_db
-  username: user76584930yr
-  password: pasSw0rD6239ej
-  schema: catalog_schema
-liquibase:
-  change-log: db/changelog/db.changelog-master.xml
-  schema: liquibase_schema
-  contexts: dev
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/catalog_service_db
+    username: user76584930yr
+    password: pasSw0rD6239ej
+    hikari:
+      schema: catalog_schema
+  liquibase:
+    change-log: db/changelog/db.changelog-master.xml
+    contexts: dev
+    default-schema: catalog_schema
+    liquibase-schema: liquibase_schema
 redis:
   host: localhost
   port: 6379
