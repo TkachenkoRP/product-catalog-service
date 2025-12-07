@@ -30,7 +30,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public List<Product> getAll(ProductFilter filter) {
         if (filter != null && hasFilters(filter)) {
-            return productRepository.getAll(filter);
+            return productRepository.findAll(filter);
         }
 
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
@@ -38,7 +38,7 @@ public class ProductServiceImpl implements ProductService {
         List<Product> products = cacheService.getList(cacheKey, Product.class);
 
         if (products == null) {
-            products = productRepository.getAll(filter);
+            products = productRepository.findAll(filter);
             cacheService.put(cacheKey, products);
         }
 
@@ -51,7 +51,7 @@ public class ProductServiceImpl implements ProductService {
         Product product = cacheService.get(cacheKey, Product.class);
 
         if (product == null) {
-            product = productRepository.getById(id)
+            product = productRepository.findById(id)
                     .orElseThrow(() -> new EntityNotFoundException("Товар с id " + id + " не найден"));
             cacheService.put(cacheKey, product);
         }

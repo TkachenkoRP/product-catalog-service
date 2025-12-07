@@ -32,7 +32,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenGetAllProducts_thenReturnAllProducts() {
-        List<Product> products = productRepository.getAll(null);
+        List<Product> products = productRepository.findAll(null);
 
         SoftAssertions softly = new SoftAssertions();
         softly.assertThat(products)
@@ -55,10 +55,10 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenGetProductById_withExistingId_thenReturnProduct() {
-        List<Product> products = productRepository.getAll(null);
+        List<Product> products = productRepository.findAll(null);
         Long existingProductId = products.get(0).getId();
 
-        Optional<Product> productOpt = productRepository.getById(existingProductId);
+        Optional<Product> productOpt = productRepository.findById(existingProductId);
 
         assertThat(productOpt).isPresent();
         productOpt.ifPresent(product -> {
@@ -73,15 +73,15 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenGetProductById_withNonExistingId_thenReturnEmpty() {
-        Optional<Product> productOpt = productRepository.getById(999L);
+        Optional<Product> productOpt = productRepository.findById(999L);
 
         assertThat(productOpt).isEmpty();
     }
 
     @Test
     void whenSaveNewProduct_thenProductIsPersisted() {
-        List<Category> categories = categoryRepository.getAll();
-        List<Brand> brands = brandRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
+        List<Brand> brands = brandRepository.findAll();
 
         Product newProduct = new Product(
                 "New Test Product",
@@ -110,17 +110,17 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
                         25
                 );
 
-        Optional<Product> foundProduct = productRepository.getById(savedProduct.getId());
+        Optional<Product> foundProduct = productRepository.findById(savedProduct.getId());
         assertThat(foundProduct).isPresent();
     }
 
     @Test
     void whenUpdateExistingProduct_thenProductIsUpdated() {
-        List<Product> products = productRepository.getAll(null);
+        List<Product> products = productRepository.findAll(null);
         Product existingProduct = products.get(0);
 
-        List<Category> categories = categoryRepository.getAll();
-        List<Brand> brands = brandRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
+        List<Brand> brands = brandRepository.findAll();
 
         Product productToUpdate = new Product(
                 existingProduct.getId(),
@@ -150,7 +150,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
                         10
                 );
 
-        Optional<Product> verifiedProduct = productRepository.getById(existingProduct.getId());
+        Optional<Product> verifiedProduct = productRepository.findById(existingProduct.getId());
         assertThat(verifiedProduct)
                 .isPresent()
                 .get()
@@ -171,8 +171,8 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenDeleteProductById_withExistingId_thenProductIsDeleted() {
-        List<Category> categories = categoryRepository.getAll();
-        List<Brand> brands = brandRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
+        List<Brand> brands = brandRepository.findAll();
 
         Product productToDelete = new Product(
                 "Product To Delete",
@@ -188,7 +188,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
         assertThat(deleted).isTrue();
 
-        Optional<Product> foundProduct = productRepository.getById(productId);
+        Optional<Product> foundProduct = productRepository.findById(productId);
         assertThat(foundProduct).isEmpty();
     }
 
@@ -212,8 +212,8 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
 
     @Test
     void whenSaveMultipleProducts_withSameName_thenAllAreSaved() {
-        List<Category> categories = categoryRepository.getAll();
-        List<Brand> brands = brandRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
+        List<Brand> brands = brandRepository.findAll();
 
         Product product1 = new Product("Same Name Product", categories.get(0).getId(), brands.get(0).getId(), 99.99, 10);
         Product product2 = new Product("Same Name Product", categories.get(1).getId(), brands.get(1).getId(), 149.99, 5);
@@ -225,7 +225,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
         assertThat(saved2).isNotNull();
         assertThat(saved1.getId()).isNotEqualTo(saved2.getId());
 
-        List<Product> allProducts = productRepository.getAll(null);
+        List<Product> allProducts = productRepository.findAll(null);
         long sameNameCount = allProducts.stream()
                 .filter(p -> p.getName().equals("Same Name Product"))
                 .count();

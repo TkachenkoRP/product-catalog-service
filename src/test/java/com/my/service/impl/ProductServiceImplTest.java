@@ -51,14 +51,14 @@ class ProductServiceImplTest {
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         when(cacheService.getList(cacheKey, Product.class)).thenReturn(null);
-        when(productRepository.getAll(null)).thenReturn(expectedProducts);
+        when(productRepository.findAll(null)).thenReturn(expectedProducts);
 
         List<Product> result = productService.getAll(null);
 
         assertThat(result).isEqualTo(expectedProducts);
         verify(cacheService).getList(cacheKey, Product.class);
         verify(cacheService).put(cacheKey, expectedProducts);
-        verify(productRepository).getAll(null);
+        verify(productRepository).findAll(null);
     }
 
     @Test
@@ -73,7 +73,7 @@ class ProductServiceImplTest {
         assertThat(result).isEqualTo(expectedProducts);
         verify(cacheService).getList(cacheKey, Product.class);
         verify(cacheService, never()).put(anyString(), any());
-        verify(productRepository, never()).getAll(any());
+        verify(productRepository, never()).findAll(any());
     }
 
     @Test
@@ -83,12 +83,12 @@ class ProductServiceImplTest {
                 new Product(1L, "Product 1", 1L, 1L, 99.99, 10)
         );
 
-        when(productRepository.getAll(filter)).thenReturn(expectedProducts);
+        when(productRepository.findAll(filter)).thenReturn(expectedProducts);
 
         List<Product> result = productService.getAll(filter);
 
         assertThat(result).isEqualTo(expectedProducts);
-        verify(productRepository).getAll(filter);
+        verify(productRepository).findAll(filter);
         verify(cacheService, never()).getList(anyString(), any());
         verify(cacheService, never()).put(anyString(), any());
     }
@@ -100,7 +100,7 @@ class ProductServiceImplTest {
         String cacheKey = CacheKeyGenerator.generateProductKey(productId);
 
         when(cacheService.get(cacheKey, Product.class)).thenReturn(null);
-        when(productRepository.getById(productId)).thenReturn(Optional.of(expectedProduct));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(expectedProduct));
 
         Product result = productService.getById(productId);
 
@@ -122,7 +122,7 @@ class ProductServiceImplTest {
         assertThat(result).isEqualTo(expectedProduct);
         verify(cacheService).get(cacheKey, Product.class);
         verify(cacheService, never()).put(anyString(), any());
-        verify(productRepository, never()).getById(any());
+        verify(productRepository, never()).findById(any());
     }
 
     @Test
@@ -130,7 +130,7 @@ class ProductServiceImplTest {
         Long productId = 999L;
 
         when(cacheService.get(anyString(), eq(Product.class))).thenReturn(null);
-        when(productRepository.getById(productId)).thenReturn(Optional.empty());
+        when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> productService.getById(productId))
                 .isInstanceOf(EntityNotFoundException.class)

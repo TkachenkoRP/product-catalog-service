@@ -33,7 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
         List<Category> categories = cacheService.getList(cacheKey, Category.class);
 
         if (categories == null) {
-            categories = categoryRepository.getAll();
+            categories = categoryRepository.findAll();
             cacheService.put(cacheKey, categories);
         }
 
@@ -46,7 +46,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = cacheService.get(cacheKey, Category.class);
 
         if (category == null) {
-            category = categoryRepository.getById(id).orElseThrow(
+            category = categoryRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException(MessageFormat.format("Категория с id {0} не найдена", id)));
             cacheService.put(cacheKey, category);
         }

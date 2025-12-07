@@ -55,7 +55,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Product> getAll(ProductFilter filter) {
+    public List<Product> findAll(ProductFilter filter) {
         StringBuilder sql = new StringBuilder(
                 String.format(SELECT_ALL_BASE_SQL, schema));
 
@@ -97,7 +97,7 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<Product> getById(Long id) {
+    public Optional<Product> findById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
         try {
             Product product = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToProduct(rs), id);

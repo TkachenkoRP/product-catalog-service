@@ -1,6 +1,5 @@
 package com.my.controller;
 
-import com.my.dto.ErrorResponseDto;
 import com.my.dto.UserLoginRequestDto;
 import com.my.dto.UserRegisterRequestDto;
 import com.my.dto.UserResponseDto;
@@ -56,7 +55,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(UserResponseDto::email, UserResponseDto::username)
@@ -79,8 +78,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Введены неверные данные");
+        assertThat(getResponseMessage(response)).contains("Введены неверные данные");
     }
 
     @Test
@@ -94,8 +92,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле email должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле email должно быть заполнено");
     }
 
     @Test
@@ -109,8 +106,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Введите корректный email");
+        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
     }
 
     @Test
@@ -124,8 +120,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле password должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле password должно быть заполнено");
     }
 
     @Test
@@ -136,7 +131,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(getResponseMessage(response)).contains("Успешный выход из системы");
         verify(userService).logout();
     }
 
@@ -153,10 +148,10 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpMethod.POST,
                 "/api/auth/register",
                 requestDto,
-                HttpStatus.OK
+                HttpStatus.CREATED
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(UserResponseDto::email, UserResponseDto::username)
@@ -176,8 +171,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле email должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле email должно быть заполнено");
     }
 
     @Test
@@ -191,8 +185,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Введите корректный email");
+        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
     }
 
     @Test
@@ -206,8 +199,7 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле username должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле username должно быть заполнено");
     }
 
     @Test
@@ -221,7 +213,6 @@ class AuthControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Пароль должен содержать минимум 6 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Пароль должен содержать минимум 6 символов");
     }
 }

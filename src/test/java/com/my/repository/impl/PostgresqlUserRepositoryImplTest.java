@@ -23,7 +23,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
 
     @Test
     void whenGetAllUsers_thenReturnAllUsers() {
-        List<User> users = userRepository.getAll();
+        List<User> users = userRepository.findAll();
 
         assertThat(users)
                 .isNotNull()
@@ -34,10 +34,10 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
 
     @Test
     void whenGetUserById_withExistingId_thenReturnUser() {
-        List<User> allUsers = userRepository.getAll();
+        List<User> allUsers = userRepository.findAll();
         Long existingUserId = allUsers.get(0).getId();
 
-        Optional<User> userOpt = userRepository.getById(existingUserId);
+        Optional<User> userOpt = userRepository.findById(existingUserId);
 
         assertThat(userOpt).isPresent();
         userOpt.ifPresent(user -> {
@@ -50,7 +50,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
 
     @Test
     void whenGetUserById_withNonExistingId_thenReturnEmpty() {
-        Optional<User> userOpt = userRepository.getById(999L);
+        Optional<User> userOpt = userRepository.findById(999L);
         assertThat(userOpt).isEmpty();
     }
 
@@ -65,13 +65,13 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
                 .extracting(User::getId, User::getEmail, User::getUsername, User::getRole)
                 .containsExactly(savedUser.getId(), "newuser@test.ru", "New User", UserRole.ROLE_USER);
 
-        Optional<User> foundUser = userRepository.getById(savedUser.getId());
+        Optional<User> foundUser = userRepository.findById(savedUser.getId());
         assertThat(foundUser).isPresent();
     }
 
     @Test
     void whenUpdateExistingUser_thenUserIsUpdated() {
-        List<User> users = userRepository.getAll();
+        List<User> users = userRepository.findAll();
         User existingUser = users.get(0);
 
         User userToUpdate = new User(
@@ -89,7 +89,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
                 .extracting(User::getEmail, User::getUsername, User::getRole)
                 .containsExactly("updated@test.ru", "Updated User", UserRole.ROLE_ADMIN);
 
-        Optional<User> verifiedUser = userRepository.getById(existingUser.getId());
+        Optional<User> verifiedUser = userRepository.findById(existingUser.getId());
         assertThat(verifiedUser)
                 .isPresent()
                 .get()
@@ -118,7 +118,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
 
         assertThat(deleted).isTrue();
 
-        Optional<User> foundUser = userRepository.getById(userId);
+        Optional<User> foundUser = userRepository.findById(userId);
         assertThat(foundUser).isEmpty();
     }
 

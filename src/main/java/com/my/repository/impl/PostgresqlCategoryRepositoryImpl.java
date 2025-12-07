@@ -48,14 +48,14 @@ public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Category> getAll() {
+    public List<Category> findAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToCategory(rs));
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<Category> getById(Long id) {
+    public Optional<Category> findById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
         try {
             Category category = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToCategory(rs), id);

@@ -55,14 +55,14 @@ class BrandServiceImplTest {
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(cacheService.getList(cacheKey, Brand.class)).thenReturn(null);
-        when(brandRepository.getAll()).thenReturn(expectedBrands);
+        when(brandRepository.findAll()).thenReturn(expectedBrands);
 
         List<Brand> result = brandService.getAll();
 
         assertThat(result).isEqualTo(expectedBrands);
         verify(cacheService).getList(cacheKey, Brand.class);
         verify(cacheService).put(cacheKey, expectedBrands);
-        verify(brandRepository).getAll();
+        verify(brandRepository).findAll();
     }
 
     @Test
@@ -77,7 +77,7 @@ class BrandServiceImplTest {
         assertThat(result).isEqualTo(expectedBrands);
         verify(cacheService).getList(cacheKey, Brand.class);
         verify(cacheService, never()).put(anyString(), any());
-        verify(brandRepository, never()).getAll();
+        verify(brandRepository, never()).findAll();
     }
 
     @Test
@@ -87,20 +87,20 @@ class BrandServiceImplTest {
         String cacheKey = CacheKeyGenerator.generateBrandKey(brandId);
 
         when(cacheService.get(cacheKey, Brand.class)).thenReturn(null);
-        when(brandRepository.getById(brandId)).thenReturn(Optional.of(expectedBrand));
+        when(brandRepository.findById(brandId)).thenReturn(Optional.of(expectedBrand));
 
         Brand result = brandService.getById(brandId);
 
         assertThat(result).isEqualTo(expectedBrand);
         verify(cacheService).get(cacheKey, Brand.class);
         verify(cacheService).put(cacheKey, expectedBrand);
-        verify(brandRepository).getById(brandId);
+        verify(brandRepository).findById(brandId);
     }
 
     @Test
     void whenGetNonExistingBrandById_thenThrowException() {
         Long brandId = 999L;
-        when(brandRepository.getById(brandId)).thenReturn(Optional.empty());
+        when(brandRepository.findById(brandId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> brandService.getById(brandId))
                 .isInstanceOf(EntityNotFoundException.class)

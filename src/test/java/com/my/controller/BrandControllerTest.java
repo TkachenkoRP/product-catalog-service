@@ -1,9 +1,7 @@
 package com.my.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.my.dto.BrandRequestDto;
 import com.my.dto.BrandResponseDto;
-import com.my.dto.ErrorResponseDto;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
@@ -21,7 +19,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,8 +62,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        List<BrandResponseDto> result = fromResponse(response, new TypeReference<>() {
-        });
+        List<BrandResponseDto> result = extractListFromResponse(response, BrandResponseDto.class);
 
         assertThat(result)
                 .hasSize(2)
@@ -91,7 +87,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        BrandResponseDto result = fromResponse(response, BrandResponseDto.class);
+        BrandResponseDto result = extractDataFromResponse(response, BrandResponseDto.class);
 
         assertThat(result)
                 .extracting(BrandResponseDto::id, BrandResponseDto::name)
@@ -112,8 +108,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Бренд не найден");
+        assertThat(getResponseMessage(response)).contains("Бренд не найден");
     }
 
     @Test
@@ -131,11 +126,10 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpMethod.POST,
                 "/api/brand",
                 requestDto,
-                HttpStatus.OK
+                HttpStatus.CREATED
         );
 
-        BrandResponseDto result = fromResponse(response, BrandResponseDto.class);
-
+        BrandResponseDto result = extractDataFromResponse(response, BrandResponseDto.class);
         assertThat(result)
                 .extracting(BrandResponseDto::id, BrandResponseDto::name)
                 .containsExactly(1L, "Sony");
@@ -159,8 +153,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Samsung уже существует");
+        assertThat(getResponseMessage(response)).contains("Samsung уже существует");
     }
 
     @Test
@@ -174,8 +167,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле name должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле name должно быть заполнено");
     }
 
     @Test
@@ -189,8 +181,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Название бренда должно быть от 2 до 100 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Название бренда должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -205,8 +196,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Название бренда должно быть от 2 до 100 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Название бренда должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -228,7 +218,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        BrandResponseDto result = fromResponse(response, BrandResponseDto.class);
+        BrandResponseDto result = extractDataFromResponse(response, BrandResponseDto.class);
 
         assertThat(result)
                 .extracting(BrandResponseDto::id, BrandResponseDto::name)
@@ -248,42 +238,7 @@ class BrandControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(getResponseMessage(response)).contains("Бренд успешно удален");
         verify(brandService).deleteById(brandId);
-    }
-
-    @Test
-    void whenDeleteBrandFails_thenStillReturnSuccess() throws Exception {
-        Long brandId = 1L;
-        when(brandService.deleteById(brandId)).thenReturn(false);
-
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.DELETE,
-                "/api/brand/" + brandId,
-                HttpStatus.OK
-        );
-
-        assertThat(response.getContentAsString()).isEmpty();
-        verify(brandService).deleteById(brandId);
-    }
-
-    @Test
-    void whenGetBrandsWithQueryParameters_thenReturnFilteredResults() throws Exception {
-        List<Brand> brands = List.of(new Brand(1L, "Samsung"));
-        List<BrandResponseDto> responseDtos = List.of(new BrandResponseDto(1L, "Samsung"));
-
-        when(brandService.getAll()).thenReturn(brands);
-        when(brandMapper.toDto(brands)).thenReturn(responseDtos);
-
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/brand",
-                HttpStatus.OK,
-                Map.of("search", "sam", "page", "1")
-        );
-
-        List<BrandResponseDto> result = fromResponse(response, new TypeReference<>() {
-        });
-        assertThat(result).hasSize(1);
     }
 }

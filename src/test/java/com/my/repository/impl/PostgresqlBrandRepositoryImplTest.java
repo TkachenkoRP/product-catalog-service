@@ -23,7 +23,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
 
     @Test
     void whenGetAllBrands_thenReturnAllBrands() {
-        List<Brand> brands = brandRepository.getAll();
+        List<Brand> brands = brandRepository.findAll();
 
         assertThat(brands)
                 .isNotNull()
@@ -34,11 +34,11 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
 
     @Test
     void whenGetBrandById_withExistingId_thenReturnBrand() {
-        List<Brand> brands = brandRepository.getAll();
+        List<Brand> brands = brandRepository.findAll();
         Long existingBrandId = brands.get(0).getId();
         String expectedName = brands.get(0).getName();
 
-        Optional<Brand> brandOpt = brandRepository.getById(existingBrandId);
+        Optional<Brand> brandOpt = brandRepository.findById(existingBrandId);
 
         assertThat(brandOpt).isPresent();
         brandOpt.ifPresent(brand -> {
@@ -49,7 +49,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
 
     @Test
     void whenGetBrandById_withNonExistingId_thenReturnEmpty() {
-        Optional<Brand> brandOpt = brandRepository.getById(999L);
+        Optional<Brand> brandOpt = brandRepository.findById(999L);
 
         assertThat(brandOpt).isEmpty();
     }
@@ -65,13 +65,13 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
                 .extracting(Brand::getId, Brand::getName)
                 .containsExactly(savedBrand.getId(), "Sony");
 
-        Optional<Brand> foundBrand = brandRepository.getById(savedBrand.getId());
+        Optional<Brand> foundBrand = brandRepository.findById(savedBrand.getId());
         assertThat(foundBrand).isPresent();
     }
 
     @Test
     void whenUpdateExistingBrand_thenBrandIsUpdated() {
-        List<Brand> brands = brandRepository.getAll();
+        List<Brand> brands = brandRepository.findAll();
         Brand existingBrand = brands.get(0);
         String updatedName = "Updated " + existingBrand.getName();
 
@@ -84,7 +84,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
                 .extracting(Brand::getName)
                 .isEqualTo(updatedName);
 
-        Optional<Brand> verifiedBrand = brandRepository.getById(existingBrand.getId());
+        Optional<Brand> verifiedBrand = brandRepository.findById(existingBrand.getId());
         assertThat(verifiedBrand)
                 .isPresent()
                 .get()
@@ -109,13 +109,13 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
         Brand savedBrand = brandRepository.save(brandToDelete);
         Long brandId = savedBrand.getId();
 
-        assertThat(brandRepository.getById(brandId)).isPresent();
+        assertThat(brandRepository.findById(brandId)).isPresent();
 
         boolean deleted = brandRepository.deleteById(brandId);
 
         assertThat(deleted).isTrue();
 
-        Optional<Brand> foundBrand = brandRepository.getById(brandId);
+        Optional<Brand> foundBrand = brandRepository.findById(brandId);
         assertThat(foundBrand).isEmpty();
     }
 

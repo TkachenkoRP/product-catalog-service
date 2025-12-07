@@ -15,7 +15,7 @@ public interface ProductRepository {
      *
      * @return список всех товаров
      */
-    List<Product> getAll(ProductFilter filter);
+    List<Product> findAll(ProductFilter filter);
 
     /**
      * Находит товар по идентификатору.
@@ -23,7 +23,7 @@ public interface ProductRepository {
      * @param id идентификатор товара
      * @return Optional с товаром, если найден, иначе пустой Optional
      */
-    Optional<Product> getById(Long id);
+    Optional<Product> findById(Long id);
 
     /**
      * Сохраняет новый товар в хранилище.

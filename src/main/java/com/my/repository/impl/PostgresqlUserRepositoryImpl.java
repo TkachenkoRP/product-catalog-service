@@ -45,14 +45,14 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public List<User> getAll() {
+    public List<User> findAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToUser(rs));
     }
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<User> getById(Long id) {
+    public Optional<User> findById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
         try {
             User user = jdbcTemplate.queryForObject(sql, (rs, rowNum) -> mapResultSetToUser(rs), id);

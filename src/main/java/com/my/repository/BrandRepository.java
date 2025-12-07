@@ -10,11 +10,11 @@ import java.util.Optional;
  */
 public interface BrandRepository {
     /**
-     * Получает список всех брендов из хранилища.
+     * Находит список всех брендов из хранилища.
      *
      * @return список всех брендов
      */
-    List<Brand> getAll();
+    List<Brand> findAll();
 
     /**
      * Находит бренд по идентификатору.
@@ -22,7 +22,7 @@ public interface BrandRepository {
      * @param id идентификатор бренда
      * @return Optional с брендом, если найден, иначе пустой Optional
      */
-    Optional<Brand> getById(Long id);
+    Optional<Brand> findById(Long id);
 
     /**
      * Сохраняет новый бренд в хранилище.

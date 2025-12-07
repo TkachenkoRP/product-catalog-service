@@ -2,7 +2,9 @@ package com.my.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.dto.ApiResponseDto;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -14,6 +16,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.UnsupportedEncodingException;
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.http.HttpMethod.DELETE;
@@ -90,5 +93,24 @@ public abstract class AbstractControllerTest {
 
     protected static <T> T fromResponse(MockHttpServletResponse response, TypeReference<T> typeReference) throws JsonProcessingException, UnsupportedEncodingException {
         return objectMapper.readValue(response.getContentAsString(), typeReference);
+    }
+
+    protected static <T> T extractDataFromResponse(MockHttpServletResponse response, Class<T> dataType) throws JsonProcessingException, UnsupportedEncodingException {
+        ApiResponseDto<T> apiResponse = objectMapper.readValue(response.getContentAsString(),
+                objectMapper.getTypeFactory().constructParametricType(ApiResponseDto.class, dataType));
+        return apiResponse.data();
+    }
+
+    protected static <T> List<T> extractListFromResponse(MockHttpServletResponse response, Class<T> dataType) throws JsonProcessingException, UnsupportedEncodingException {
+        JavaType listType = objectMapper.getTypeFactory().constructParametricType(List.class, dataType);
+        JavaType apiResponseType = objectMapper.getTypeFactory().constructParametricType(ApiResponseDto.class, listType);
+
+        ApiResponseDto<List<T>> apiResponse = objectMapper.readValue(response.getContentAsString(), apiResponseType);
+        return apiResponse.data();
+    }
+
+    protected static String getResponseMessage(MockHttpServletResponse response) throws JsonProcessingException, UnsupportedEncodingException {
+        ApiResponseDto<?> apiResponse = objectMapper.readValue(response.getContentAsString(), ApiResponseDto.class);
+        return apiResponse.message();
     }
 }

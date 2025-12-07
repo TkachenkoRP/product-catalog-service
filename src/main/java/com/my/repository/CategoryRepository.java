@@ -10,11 +10,11 @@ import java.util.Optional;
  */
 public interface CategoryRepository {
     /**
-     * Получает список всех категорий из хранилища.
+     * Находит список всех категорий из хранилища.
      *
      * @return список всех категорий
      */
-    List<Category> getAll();
+    List<Category> findAll();
 
     /**
      * Находит категорию по идентификатору.
@@ -22,7 +22,7 @@ public interface CategoryRepository {
      * @param id идентификатор категории
      * @return Optional с категорией, если найдена, иначе пустой Optional
      */
-    Optional<Category> getById(Long id);
+    Optional<Category> findById(Long id);
 
     /**
      * Сохраняет новую категорию в хранилище.

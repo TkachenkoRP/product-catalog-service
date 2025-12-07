@@ -1,7 +1,5 @@
 package com.my.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.my.dto.ErrorResponseDto;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.AccessDeniedException;
@@ -66,8 +64,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        List<UserResponseDto> result = fromResponse(response, new TypeReference<>() {
-        });
+        List<UserResponseDto> result = extractListFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .hasSize(2)
@@ -92,7 +89,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(
@@ -118,8 +115,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Пользователь не найден");
+        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
     }
 
     @Test
@@ -141,7 +137,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(UserResponseDto::email, UserResponseDto::username)
@@ -161,8 +157,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Введите корректный email");
+        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
     }
 
     @Test
@@ -175,9 +170,7 @@ class UserControllerTest extends AbstractControllerTest {
                 requestDto,
                 HttpStatus.BAD_REQUEST
         );
-
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Имя пользователя должно быть от 3 до 50 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Имя пользователя должно быть от 3 до 50 символов");
     }
 
     @Test
@@ -192,8 +185,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Имя пользователя должно быть от 3 до 50 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Имя пользователя должно быть от 3 до 50 символов");
     }
 
     @Test
@@ -207,8 +199,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Пароль должен содержать минимум 6 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Пароль должен содержать минимум 6 символов");
     }
 
     @Test
@@ -222,7 +213,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(getResponseMessage(response)).contains("Пользователь успешно удален");
         verify(userService).delete(userId);
     }
 
@@ -241,7 +232,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(
@@ -267,8 +258,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Пользователь не найден");
+        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
 
         verify(userService).promoteToAdmin(nonExistingUserId);
     }
@@ -285,8 +275,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.FORBIDDEN
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Требуются права администратора");
+        assertThat(getResponseMessage(response)).contains("Требуются права администратора");
 
         verify(userService).promoteToAdmin(userId);
     }
@@ -306,7 +295,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        UserResponseDto result = fromResponse(response, UserResponseDto.class);
+        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
 
         assertThat(result)
                 .extracting(
@@ -332,8 +321,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Пользователь не найден");
+        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
 
         verify(userService).demoteFromAdmin(nonExistingUserId);
     }
@@ -350,8 +338,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.FORBIDDEN
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Требуются права администратора");
+        assertThat(getResponseMessage(response)).contains("Требуются права администратора");
 
         verify(userService).demoteFromAdmin(userId);
     }
@@ -368,8 +355,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.FORBIDDEN
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Нельзя снять права администратора у самого себя");
+        assertThat(getResponseMessage(response)).contains("Нельзя снять права администратора у самого себя");
 
         verify(userService).demoteFromAdmin(userId);
     }
@@ -386,8 +372,7 @@ class UserControllerTest extends AbstractControllerTest {
                 HttpStatus.CONFLICT
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Ошибка изменения прав: Нельзя лишить прав последнего администратора");
+        assertThat(getResponseMessage(response)).contains("Ошибка изменения прав: Нельзя лишить прав последнего администратора");
 
         verify(userService).demoteFromAdmin(userId);
     }

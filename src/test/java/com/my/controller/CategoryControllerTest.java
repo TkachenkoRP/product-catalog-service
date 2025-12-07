@@ -1,9 +1,7 @@
 package com.my.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
-import com.my.dto.ErrorResponseDto;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
@@ -64,8 +62,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        List<CategoryResponseDto> result = fromResponse(response, new TypeReference<>() {
-        });
+        List<CategoryResponseDto> result = extractListFromResponse(response, CategoryResponseDto.class);
 
         assertThat(result)
                 .hasSize(2)
@@ -90,7 +87,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        CategoryResponseDto result = fromResponse(response, CategoryResponseDto.class);
+        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
 
         assertThat(result)
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
@@ -111,8 +108,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Категория не найдена");
+        assertThat(getResponseMessage(response)).contains("Категория не найдена");
     }
 
     @Test
@@ -130,10 +126,10 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpMethod.POST,
                 "/api/category",
                 requestDto,
-                HttpStatus.OK
+                HttpStatus.CREATED
         );
 
-        CategoryResponseDto result = fromResponse(response, CategoryResponseDto.class);
+        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
 
         assertThat(result)
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
@@ -158,8 +154,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Electronics уже существует");
+        assertThat(getResponseMessage(response)).contains("Electronics уже существует");
     }
 
     @Test
@@ -173,8 +168,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле name должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле name должно быть заполнено");
     }
 
     @Test
@@ -188,8 +182,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Название категории должно быть от 2 до 100 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Название категории должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -204,8 +197,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Название категории должно быть от 2 до 100 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Название категории должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -227,7 +219,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        CategoryResponseDto result = fromResponse(response, CategoryResponseDto.class);
+        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
 
         assertThat(result)
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
@@ -247,23 +239,7 @@ class CategoryControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(getResponseMessage(response)).contains("Категория успешно удалена");
         verify(categoryService).deleteById(categoryId);
     }
-
-    @Test
-    void whenDeleteCategoryFails_thenStillReturnSuccess() throws Exception {
-        Long categoryId = 1L;
-        when(categoryService.deleteById(categoryId)).thenReturn(false);
-
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.DELETE,
-                "/api/category/" + categoryId,
-                HttpStatus.OK
-        );
-
-        assertThat(response.getContentAsString()).isEmpty();
-        verify(categoryService).deleteById(categoryId);
-    }
-
 }

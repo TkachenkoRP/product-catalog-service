@@ -33,7 +33,7 @@ public class BrandServiceImpl implements BrandService {
         List<Brand> brands = cacheService.getList(cacheKey, Brand.class);
 
         if (brands == null) {
-            brands = brandRepository.getAll();
+            brands = brandRepository.findAll();
             cacheService.put(cacheKey, brands);
         }
 
@@ -46,7 +46,7 @@ public class BrandServiceImpl implements BrandService {
         Brand brand = cacheService.get(cacheKey, Brand.class);
 
         if (brand == null) {
-            brand = brandRepository.getById(id).orElseThrow(
+            brand = brandRepository.findById(id).orElseThrow(
                     () -> new EntityNotFoundException(MessageFormat.format("Бренд с id {0} не найден", id)));
             cacheService.put(cacheKey, brand);
         }

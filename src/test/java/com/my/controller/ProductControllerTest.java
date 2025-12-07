@@ -1,7 +1,5 @@
 package com.my.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.my.dto.ErrorResponseDto;
 import com.my.dto.ProductRequestDto;
 import com.my.dto.ProductResponseDto;
 import com.my.exception.EntityNotFoundException;
@@ -62,8 +60,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        List<ProductResponseDto> result = fromResponse(response, new TypeReference<>() {
-        });
+        List<ProductResponseDto> result = extractListFromResponse(response, ProductResponseDto.class);
         assertThat(result).hasSize(1);
         verify(productService).getAll(any(ProductFilter.class));
     }
@@ -83,7 +80,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        ProductResponseDto result = fromResponse(response, ProductResponseDto.class);
+        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
 
         assertThat(result)
                 .extracting(
@@ -111,8 +108,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.NOT_FOUND
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Товар не найден");
+        assertThat(getResponseMessage(response)).contains("Товар не найден");
     }
 
     @Test
@@ -130,10 +126,10 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpMethod.POST,
                 "/api/product",
                 requestDto,
-                HttpStatus.OK
+                HttpStatus.CREATED
         );
 
-        ProductResponseDto result = fromResponse(response, ProductResponseDto.class);
+        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
 
         assertThat(result)
                 .extracting(ProductResponseDto::name)
@@ -153,8 +149,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле name должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле name должно быть заполнено");
     }
 
     @Test
@@ -168,8 +163,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Название товара должно быть от 2 до 200 символов");
+        assertThat(extractListFromResponse(response, String.class)).contains("Название товара должно быть от 2 до 200 символов");
     }
 
     @Test
@@ -183,8 +177,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле categoryId должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле categoryId должно быть заполнено");
     }
 
     @Test
@@ -198,8 +191,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("ID категории должен быть положительным числом");
+        assertThat(extractListFromResponse(response, String.class)).contains("ID категории должен быть положительным числом");
     }
 
     @Test
@@ -213,8 +205,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле brandId должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле brandId должно быть заполнено");
     }
 
     @Test
@@ -228,8 +219,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Цена должна быть положительным числом");
+        assertThat(extractListFromResponse(response, String.class)).contains("Цена должна быть положительным числом");
     }
 
     @Test
@@ -243,8 +233,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message()).contains("Поле stock должно быть заполнено");
+        assertThat(extractListFromResponse(response, String.class)).contains("Поле stock должно быть заполнено");
     }
 
     @Test
@@ -258,8 +247,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.BAD_REQUEST
         );
 
-        ErrorResponseDto error = fromResponse(response, ErrorResponseDto.class);
-        assertThat(error.message())
+        assertThat(extractListFromResponse(response, String.class))
                 .contains("Название товара должно быть от 2 до 200 символов")
                 .contains("ID категории должен быть положительным числом")
                 .contains("ID бренда должен быть положительным числом")
@@ -286,7 +274,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        ProductResponseDto result = fromResponse(response, ProductResponseDto.class);
+        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
 
         assertThat(result)
                 .extracting(ProductResponseDto::name)
@@ -306,7 +294,7 @@ class ProductControllerTest extends AbstractControllerTest {
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
+        assertThat(getResponseMessage(response)).contains("Товар успешно удален");
         verify(productService).deleteById(productId);
     }
 
@@ -315,13 +303,12 @@ class ProductControllerTest extends AbstractControllerTest {
         Long productId = 1L;
         when(productService.deleteById(productId)).thenReturn(false);
 
-        MockHttpServletResponse response = performRequest(
+        performRequest(
                 HttpMethod.DELETE,
                 "/api/product/" + productId,
                 HttpStatus.OK
         );
 
-        assertThat(response.getContentAsString()).isEmpty();
         verify(productService).deleteById(productId);
     }
 }

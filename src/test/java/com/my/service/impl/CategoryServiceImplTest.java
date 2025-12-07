@@ -55,7 +55,7 @@ class CategoryServiceImplTest {
         List<Category> expectedCategories = Instancio.ofList(Category.class).create();
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
-        when(categoryRepository.getAll()).thenReturn(expectedCategories);
+        when(categoryRepository.findAll()).thenReturn(expectedCategories);
         when(cacheService.getList(cacheKey, Category.class)).thenReturn(null);
 
         List<Category> result = categoryService.getAll();
@@ -63,7 +63,7 @@ class CategoryServiceImplTest {
         assertThat(result).isEqualTo(expectedCategories);
         verify(cacheService).getList(cacheKey, Category.class);
         verify(cacheService).put(cacheKey, expectedCategories);
-        verify(categoryRepository).getAll();
+        verify(categoryRepository).findAll();
     }
 
     @Test
@@ -78,7 +78,7 @@ class CategoryServiceImplTest {
         assertThat(result).isEqualTo(expectedCategories);
         verify(cacheService).getList(cacheKey, Category.class);
         verify(cacheService, never()).put(anyString(), any());
-        verify(categoryRepository, never()).getAll();
+        verify(categoryRepository, never()).findAll();
     }
 
     @Test
@@ -88,14 +88,14 @@ class CategoryServiceImplTest {
         String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
         when(cacheService.get(cacheKey, Category.class)).thenReturn(null);
-        when(categoryRepository.getById(categoryId)).thenReturn(Optional.of(expectedCategory));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(expectedCategory));
 
         Category result = categoryService.getById(categoryId);
 
         assertThat(result).isEqualTo(expectedCategory);
         verify(cacheService).get(cacheKey, Category.class);
         verify(cacheService).put(cacheKey, expectedCategory);
-        verify(categoryRepository).getById(categoryId);
+        verify(categoryRepository).findById(categoryId);
     }
 
     @Test
@@ -111,13 +111,13 @@ class CategoryServiceImplTest {
         assertThat(result).isEqualTo(expectedCategory);
         verify(cacheService).get(cacheKey, Category.class);
         verify(cacheService, never()).put(anyString(), any());
-        verify(categoryRepository, never()).getById(any());
+        verify(categoryRepository, never()).findById(any());
     }
 
     @Test
     void whenGetNonExistingCategoryById_thenThrowException() {
         Long categoryId = 999L;
-        when(categoryRepository.getById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> categoryService.getById(categoryId))
                 .isInstanceOf(EntityNotFoundException.class)
@@ -183,7 +183,7 @@ class CategoryServiceImplTest {
         Category sourceCategory = new Category("Clothing");
         Category existingCategory = new Category(categoryId, "Electronics");
 
-        when(categoryRepository.getById(categoryId)).thenReturn(Optional.of(existingCategory));
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
         when(categoryRepository.existsByNameIgnoreCase("Clothing")).thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.update(categoryId, sourceCategory))

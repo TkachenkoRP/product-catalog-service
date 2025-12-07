@@ -22,7 +22,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
 
     @Test
     void whenGetAllCategories_thenReturnAllCategories() {
-        List<Category> categories = categoryRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
 
         assertThat(categories)
                 .isNotNull()
@@ -33,10 +33,10 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
 
     @Test
     void whenGetCategoryById_withExistingId_thenReturnCategory() {
-        List<Category> categories = categoryRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
         Long existingCategoryId = categories.get(0).getId();
 
-        Optional<Category> categoryOpt = categoryRepository.getById(existingCategoryId);
+        Optional<Category> categoryOpt = categoryRepository.findById(existingCategoryId);
 
         assertThat(categoryOpt).isPresent();
         categoryOpt.ifPresent(category -> {
@@ -47,7 +47,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
 
     @Test
     void whenGetCategoryById_withNonExistingId_thenReturnEmpty() {
-        Optional<Category> categoryOpt = categoryRepository.getById(999L);
+        Optional<Category> categoryOpt = categoryRepository.findById(999L);
 
         assertThat(categoryOpt).isEmpty();
     }
@@ -63,13 +63,13 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
                 .extracting(Category::getId, Category::getName)
                 .containsExactly(savedCategory.getId(), "Home Appliances");
 
-        Optional<Category> foundCategory = categoryRepository.getById(savedCategory.getId());
+        Optional<Category> foundCategory = categoryRepository.findById(savedCategory.getId());
         assertThat(foundCategory).isPresent();
     }
 
     @Test
     void whenUpdateExistingCategory_thenCategoryIsUpdated() {
-        List<Category> categories = categoryRepository.getAll();
+        List<Category> categories = categoryRepository.findAll();
         Category existingCategory = categories.get(0);
 
         Category categoryToUpdate = new Category(existingCategory.getId(), "Updated Electronics");
@@ -81,7 +81,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
                 .extracting(Category::getName)
                 .isEqualTo("Updated Electronics");
 
-        Optional<Category> verifiedCategory = categoryRepository.getById(existingCategory.getId());
+        Optional<Category> verifiedCategory = categoryRepository.findById(existingCategory.getId());
         assertThat(verifiedCategory)
                 .isPresent()
                 .get()
@@ -110,7 +110,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
 
         assertThat(deleted).isTrue();
 
-        Optional<Category> foundCategory = categoryRepository.getById(categoryId);
+        Optional<Category> foundCategory = categoryRepository.findById(categoryId);
         assertThat(foundCategory).isEmpty();
     }
 

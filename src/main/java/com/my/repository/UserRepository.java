@@ -15,7 +15,7 @@ public interface UserRepository {
      *
      * @return список всех пользователей
      */
-    List<User> getAll();
+    List<User> findAll();
 
     /**
      * Находит пользователя по идентификатору.
@@ -23,7 +23,7 @@ public interface UserRepository {
      * @param id идентификатор пользователя
      * @return Optional с пользователем, если найден, иначе пустой Optional
      */
-    Optional<User> getById(Long id);
+    Optional<User> findById(Long id);
 
     /**
      * Сохраняет нового пользователя в хранилище.

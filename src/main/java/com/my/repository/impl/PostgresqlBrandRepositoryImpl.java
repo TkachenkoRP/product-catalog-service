@@ -50,7 +50,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public List<Brand> getAll() {
+    public List<Brand> findAll() {
         String sql = String.format(SELECT_ALL_SQL, schema);
         return jdbcTemplate.query(
                 sql,
@@ -59,7 +59,7 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<Brand> getById(Long id) {
+    public Optional<Brand> findById(Long id) {
         String sql = String.format(SELECT_BY_ID_SQL, schema);
         try {
             Brand brand = jdbcTemplate.queryForObject(

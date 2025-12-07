@@ -1,6 +1,7 @@
 package com.my.controller;
 
 import com.my.annotation.Audition;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.mapper.UserMapper;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,9 +39,10 @@ public class UserController {
     @Operation(summary = "Получить всех пользователей", description = "Возвращает список всех пользователей")
     @ApiResponse(responseCode = "200", description = "Успешное получение списка пользователей")
     @GetMapping
-    public List<UserResponseDto> getAll() {
+    public ResponseEntity<ApiResponseDto<List<UserResponseDto>>> getAll() {
         List<User> userList = userService.getAll();
-        return userMapper.toDto(userList);
+        List<UserResponseDto> dtos = userMapper.toDto(userList);
+        return ResponseEntity.ok(ApiResponseDto.success(dtos));
     }
 
     @Operation(summary = "Получить пользователя по ID", description = "Возвращает пользователя по указанному идентификатору")
@@ -48,9 +51,10 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content)
     })
     @GetMapping("/{id}")
-    public UserResponseDto getById(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> getById(@PathVariable("id") Long id) {
         User user = userService.getById(id);
-        return userMapper.toDto(user);
+        UserResponseDto dto = userMapper.toDto(user);
+        return ResponseEntity.ok(ApiResponseDto.success(dto));
     }
 
     @Operation(summary = "Обновить пользователя", description = "Обновляет существующего пользователя")
@@ -60,11 +64,12 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content)
     })
     @PatchMapping("/{id}")
-    public UserResponseDto patch(@PathVariable("id") Long id,
-                                 @RequestBody @Validated(ValidationGroups.Update.class) UserRequestDto request) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> patch(@PathVariable("id") Long id,
+                                                                 @RequestBody @Validated(ValidationGroups.Update.class) UserRequestDto request) {
         User entity = userMapper.toEntity(request);
         User updated = userService.update(id, entity);
-        return userMapper.toDto(updated);
+        UserResponseDto dto = userMapper.toDto(updated);
+        return ResponseEntity.ok(ApiResponseDto.success("Пользователь успешно обновлен", dto));
     }
 
     @Operation(summary = "Удалить пользователя", description = "Удаляет пользователя по указанному идентификатору")
@@ -73,19 +78,34 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "Пользователь не найден", content = @Content)
     })
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable("id") Long id) {
         userService.delete(id);
+        return ResponseEntity.ok(ApiResponseDto.success("Пользователь успешно удален"));
     }
 
+    @Operation(summary = "Назначить администратором", description = "Назначает указанного пользователя администратором системы.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь успешно назначен администратором"),
+            @ApiResponse(responseCode = "403", description = "Недостаточно прав. Требуется роль администратора."),
+            @ApiResponse(responseCode = "404", description = "Пользователь с указанным ID не найден")
+    })
     @PostMapping("/{id}/promote")
-    public UserResponseDto promoteToAdmin(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> promoteToAdmin(@PathVariable("id") Long id) {
         User user = userService.promoteToAdmin(id);
-        return userMapper.toDto(user);
+        UserResponseDto dto = userMapper.toDto(user);
+        return ResponseEntity.ok(ApiResponseDto.success("User promoted to admin", dto));
     }
 
+    @Operation(summary = "Лишить прав администратора", description = "Лишает указанного пользователя прав администратора системы.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь успешно лишен прав администратора"),
+            @ApiResponse(responseCode = "403", description = "Недостаточно прав. Требуется роль администратора."),
+            @ApiResponse(responseCode = "404", description = "Пользователь с указанным ID не найден")
+    })
     @PostMapping("/{id}/demote")
-    public UserResponseDto demoteFromAdmin(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<UserResponseDto>> demoteFromAdmin(@PathVariable("id") Long id) {
         User user = userService.demoteFromAdmin(id);
-        return userMapper.toDto(user);
+        UserResponseDto dto = userMapper.toDto(user);
+        return ResponseEntity.ok(ApiResponseDto.success("User demoted from admin", dto));
     }
 }

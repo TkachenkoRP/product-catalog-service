@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
         if (!UserManager.isAdmin()) {
             throw new AccessDeniedException("Требуются права администратора");
         }
-        return userRepository.getAll();
+        return userRepository.findAll();
     }
 
     @Override
@@ -58,7 +58,7 @@ public class UserServiceImpl implements UserService {
         if (!UserManager.isCurrentUser(id) && !UserManager.isAdmin()) {
             throw new AccessDeniedException("Нет прав для выполнения операции");
         }
-        return userRepository.getById(id).orElseThrow(
+        return userRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(MessageFormat.format("Пользователь с id {0} не найден", id)));
     }
 

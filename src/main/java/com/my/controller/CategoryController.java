@@ -1,6 +1,7 @@
 package com.my.controller;
 
 import com.my.annotation.Audition;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
 import com.my.mapper.CategoryMapper;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,9 +40,10 @@ public class CategoryController {
     @Operation(summary = "Получить все категории", description = "Возвращает список всех категорий")
     @ApiResponse(responseCode = "200", description = "Успешное получение списка категорий")
     @GetMapping
-    public List<CategoryResponseDto> getAll() {
+    public ResponseEntity<ApiResponseDto<List<CategoryResponseDto>>> getAll() {
         List<Category> categories = categoryService.getAll();
-        return categoryMapper.toDto(categories);
+        List<CategoryResponseDto> dtos = categoryMapper.toDto(categories);
+        return ResponseEntity.ok(ApiResponseDto.success(dtos));
     }
 
     @Operation(summary = "Получить категорию по ID", description = "Возвращает категорию по указанному идентификатору")
@@ -48,9 +52,10 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Категория не найдена", content = @Content)
     })
     @GetMapping("/{id}")
-    public CategoryResponseDto getById(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> getById(@PathVariable("id") Long id) {
         Category category = categoryService.getById(id);
-        return categoryMapper.toDto(category);
+        CategoryResponseDto dto = categoryMapper.toDto(category);
+        return ResponseEntity.ok(ApiResponseDto.success(dto));
     }
 
     @Operation(summary = "Создать новую категорию", description = "Создает новую категорию")
@@ -59,10 +64,12 @@ public class CategoryController {
             @ApiResponse(responseCode = "400", description = "Неверные данные запроса", content = @Content)
     })
     @PostMapping
-    public CategoryResponseDto post(@RequestBody @Validated(ValidationGroups.Create.class) CategoryRequestDto request) {
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> post(@RequestBody @Validated(ValidationGroups.Create.class) CategoryRequestDto request) {
         Category entity = categoryMapper.toEntity(request);
         Category saved = categoryService.save(entity);
-        return categoryMapper.toDto(saved);
+        CategoryResponseDto dto = categoryMapper.toDto(saved);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponseDto.success("Категория успешно создана", dto));
     }
 
     @Operation(summary = "Обновить категорию", description = "Обновляет существующую категорию")
@@ -72,11 +79,12 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Категория не найдена", content = @Content)
     })
     @PatchMapping("/{id}")
-    public CategoryResponseDto patch(@PathVariable("id") Long id,
+    public ResponseEntity<ApiResponseDto<CategoryResponseDto>> patch(@PathVariable("id") Long id,
                                      @RequestBody @Validated(ValidationGroups.Update.class) CategoryRequestDto request) {
         Category entity = categoryMapper.toEntity(request);
         Category updated = categoryService.update(id, entity);
-        return categoryMapper.toDto(updated);
+        CategoryResponseDto dto = categoryMapper.toDto(updated);
+        return ResponseEntity.ok(ApiResponseDto.success("Категория успешно обновлена", dto));
     }
 
     @Operation(summary = "Удалить категорию", description = "Удаляет категорию по указанному идентификатору")
@@ -86,7 +94,8 @@ public class CategoryController {
             @ApiResponse(responseCode = "409", description = "Категория имеет ссылки", content = @Content)
     })
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable("id") Long id) {
+    public ResponseEntity<ApiResponseDto<Void>> delete(@PathVariable("id") Long id) {
         categoryService.deleteById(id);
+        return ResponseEntity.ok(ApiResponseDto.success("Категория успешно удалена"));
     }
 }

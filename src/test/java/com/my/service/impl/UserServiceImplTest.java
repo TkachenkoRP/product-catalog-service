@@ -125,12 +125,12 @@ class UserServiceImplTest {
     void whenGetAllAsAdmin_thenReturnAllUsers() {
         UserManagerMockHelper.setAdminUser();
         List<User> expectedUsers = Instancio.ofList(User.class).create();
-        when(userRepository.getAll()).thenReturn(expectedUsers);
+        when(userRepository.findAll()).thenReturn(expectedUsers);
 
         List<User> result = userService.getAll();
 
         assertThat(result).isEqualTo(expectedUsers);
-        verify(userRepository).getAll();
+        verify(userRepository).findAll();
     }
 
     @Test
@@ -140,7 +140,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getAll())
                 .isInstanceOf(AccessDeniedException.class);
 
-        verify(userRepository, never()).getAll();
+        verify(userRepository, never()).findAll();
     }
 
     @Test
@@ -150,7 +150,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getAll())
                 .isInstanceOf(AccessDeniedException.class);
 
-        verify(userRepository, never()).getAll();
+        verify(userRepository, never()).findAll();
     }
 
     @Test
@@ -158,7 +158,7 @@ class UserServiceImplTest {
         UserManagerMockHelper.setAdminUser();
         Long userId = 1L;
         User expectedUser = new User(userId, "test@test.ru", "Test User", "password", UserRole.ROLE_USER);
-        when(userRepository.getById(userId)).thenReturn(Optional.of(expectedUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
 
         User result = userService.getById(userId);
 
@@ -170,12 +170,12 @@ class UserServiceImplTest {
         Long userId = 1L;
         User currentUser = new User(userId, "me@test.ru", "Me", "password", UserRole.ROLE_USER);
         UserManagerMockHelper.setRegularUser(userId);
-        when(userRepository.getById(userId)).thenReturn(Optional.of(currentUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
 
         User result = userService.getById(userId);
 
         assertThat(result).isEqualTo(currentUser);
-        verify(userRepository).getById(userId);
+        verify(userRepository).findById(userId);
     }
 
     @Test
@@ -187,14 +187,14 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.getById(targetUserId))
                 .isInstanceOf(AccessDeniedException.class);
 
-        verify(userRepository, never()).getById(any());
+        verify(userRepository, never()).findById(any());
     }
 
     @Test
     void whenGetNonExistingUserById_thenThrowException() {
         UserManagerMockHelper.setAdminUser();
         Long userId = 999L;
-        when(userRepository.getById(userId)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.getById(userId))
                 .isInstanceOf(EntityNotFoundException.class)
@@ -209,7 +209,7 @@ class UserServiceImplTest {
         User existingUser = new User(userId, "old@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
         User updatedUser = new User(userId, "updated@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.isPresentByEmail("updated@test.ru")).thenReturn(false);
         when(userRepository.update(existingUser)).thenReturn(updatedUser);
 
@@ -227,7 +227,7 @@ class UserServiceImplTest {
         UserManagerMockHelper.setRegularUser(userId);
 
         User sourceUser = new User("updated@test.ru", "Updated Me", "newpassword", UserRole.ROLE_USER);
-        when(userRepository.getById(userId)).thenReturn(Optional.of(currentUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
         when(userRepository.isPresentByEmail("updated@test.ru")).thenReturn(false);
         when(userRepository.update(currentUser)).thenReturn(sourceUser);
 
@@ -248,7 +248,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.update(targetUserId, sourceUser))
                 .isInstanceOf(AccessDeniedException.class);
 
-        verify(userRepository, never()).getById(any());
+        verify(userRepository, never()).findById(any());
         verify(userMapper, never()).updateUser(any(), any());
     }
 
@@ -260,7 +260,7 @@ class UserServiceImplTest {
         User existingUser = new User(userId, "same@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
         User updatedUser = new User(userId, "same@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.update(existingUser)).thenReturn(updatedUser);
 
         User result = userService.update(userId, sourceUser);
@@ -276,7 +276,7 @@ class UserServiceImplTest {
         User sourceUser = new User("existing@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
         User existingUser = new User(userId, "old@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(existingUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
         when(userRepository.isPresentByEmail("existing@test.ru")).thenReturn(true);
 
         assertThatThrownBy(() -> userService.update(userId, sourceUser))
@@ -295,7 +295,7 @@ class UserServiceImplTest {
                 .set(field(User:: getRole), UserRole.ROLE_USER)
                 .create();
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(userToDelete));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(userToDelete));
         when(userRepository.deleteById(userId)).thenReturn(true);
 
         boolean result = userService.delete(userId);
@@ -310,7 +310,7 @@ class UserServiceImplTest {
         User currentUser = new User(userId, "me@test.ru", "Me", "password", UserRole.ROLE_USER);
         UserManagerMockHelper.setRegularUser(userId);
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(currentUser));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
         when(userRepository.deleteById(userId)).thenReturn(true);
 
         boolean result = userService.delete(userId);
@@ -340,7 +340,7 @@ class UserServiceImplTest {
                 .create();
         UserManagerMockHelper.setCurrentUser(admin);
 
-        when(userRepository.getById(adminId)).thenReturn(Optional.of(admin));
+        when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
         when(userRepository.findByRole(UserRole.ROLE_ADMIN)).thenReturn(List.of(admin));
 
         assertThatThrownBy(() -> userService.delete(adminId))
@@ -382,7 +382,7 @@ class UserServiceImplTest {
                 .set(field(User::getRole), UserRole.ROLE_ADMIN)
                 .create();
 
-        when(userRepository.getById(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.update(user)).thenReturn(promotedUser);
 
         User result = userService.promoteToAdmin(userId);
@@ -399,7 +399,7 @@ class UserServiceImplTest {
         assertThatThrownBy(() -> userService.promoteToAdmin(userId))
                 .isInstanceOf(AccessDeniedException.class);
 
-        verify(userRepository, never()).getById(any());
+        verify(userRepository, never()).findById(any());
     }
 
     @Test
@@ -411,7 +411,7 @@ class UserServiceImplTest {
         User targetAdmin = new User(targetUserId, "target@test.ru", "Target", "password", UserRole.ROLE_ADMIN);
         User demotedUser = new User(targetUserId, "target@test.ru", "Target", "password", UserRole.ROLE_USER);
 
-        when(userRepository.getById(targetUserId)).thenReturn(Optional.of(targetAdmin));
+        when(userRepository.findById(targetUserId)).thenReturn(Optional.of(targetAdmin));
         when(userRepository.findByRole(UserRole.ROLE_ADMIN)).thenReturn(List.of(admin, targetAdmin));
         when(userRepository.update(targetAdmin)).thenReturn(demotedUser);
 
