@@ -1,6 +1,6 @@
 package com.my.controller;
 
-import com.my.annotation.Audition;
+import com.example.auditloggingstarter.annotation.EnableLoggingAspect;
 import com.my.dto.UserLoginRequestDto;
 import com.my.dto.UserRegisterRequestDto;
 import com.my.dto.UserResponseDto;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@EnableLoggingAspect
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Audition
 @Tag(name = "Аутентификация", description = "API для регистрации и аутентификации пользователей")
 public class AuthController {
     private final UserService userService;
@@ -36,6 +36,7 @@ public class AuthController {
     @PostMapping("/login")
     public UserResponseDto login(@RequestBody @Valid UserLoginRequestDto request) {
         User user = userService.login(request.email(), request.password());
+        System.out.println(user);
         return userMapper.toDto(user);
     }
 
