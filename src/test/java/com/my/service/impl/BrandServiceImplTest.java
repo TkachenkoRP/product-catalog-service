@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.InstancioTestEntityFactory;
 import com.my.UserManagerMockHelper;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
@@ -10,7 +11,6 @@ import com.my.repository.BrandRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +51,8 @@ class BrandServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnBrandsFromRepositoryAndCache() {
-        List<Brand> expectedBrands = Instancio.ofList(Brand.class).create();
+        int countBrands = 5;
+        List<Brand> expectedBrands = InstancioTestEntityFactory.createBrandList(countBrands);
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(cacheService.getList(cacheKey, Brand.class)).thenReturn(null);
@@ -59,7 +60,9 @@ class BrandServiceImplTest {
 
         List<Brand> result = brandService.getAll();
 
-        assertThat(result).isEqualTo(expectedBrands);
+        assertThat(result)
+                .hasSize(countBrands)
+                .isEqualTo(expectedBrands);
         verify(cacheService).getList(cacheKey, Brand.class);
         verify(cacheService).put(cacheKey, expectedBrands);
         verify(brandRepository).findAll();
@@ -67,14 +70,17 @@ class BrandServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnBrandsFromCache() {
-        List<Brand> expectedBrands = Instancio.ofList(Brand.class).create();
+        int countBrands = 5;
+        List<Brand> expectedBrands = InstancioTestEntityFactory.createBrandList(countBrands);
         String cacheKey = CacheKeyGenerator.generateAllBrandsKey();
 
         when(cacheService.getList(cacheKey, Brand.class)).thenReturn(expectedBrands);
 
         List<Brand> result = brandService.getAll();
 
-        assertThat(result).isEqualTo(expectedBrands);
+        assertThat(result)
+                .hasSize(countBrands)
+                .isEqualTo(expectedBrands);
         verify(cacheService).getList(cacheKey, Brand.class);
         verify(cacheService, never()).put(anyString(), any());
         verify(brandRepository, never()).findAll();
@@ -83,7 +89,7 @@ class BrandServiceImplTest {
     @Test
     void whenGetExistingBrandById_thenReturnBrandFromRepositoryAndCache() {
         Long brandId = 1L;
-        Brand expectedBrand = new Brand(brandId, "Samsung");
+        Brand expectedBrand = InstancioTestEntityFactory.createBrand(brandId);
         String cacheKey = CacheKeyGenerator.generateBrandKey(brandId);
 
         when(cacheService.get(cacheKey, Brand.class)).thenReturn(null);
@@ -95,6 +101,22 @@ class BrandServiceImplTest {
         verify(cacheService).get(cacheKey, Brand.class);
         verify(cacheService).put(cacheKey, expectedBrand);
         verify(brandRepository).findById(brandId);
+    }
+
+    @Test
+    void whenGetExistingBrandById_thenReturnBrandFromCache() {
+        Long brandId = 1L;
+        Brand expectedBrand = InstancioTestEntityFactory.createBrand(brandId);
+        String brandKey = CacheKeyGenerator.generateBrandKey(brandId);
+
+        when(cacheService.get(brandKey, Brand.class)).thenReturn(expectedBrand);
+
+        Brand result = brandService.getById(brandId);
+
+        assertThat(result).isEqualTo(expectedBrand);
+        verify(cacheService).get(brandKey, Brand.class);
+        verify(cacheService, never()).put(anyString(), any());
+        verify(brandRepository, never()).findById(any());
     }
 
     @Test

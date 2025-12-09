@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.InstancioTestEntityFactory;
 import com.my.UserManagerMockHelper;
 import com.my.exception.AlreadyExistException;
 import com.my.exception.EntityHasReferencesException;
@@ -10,7 +11,6 @@ import com.my.repository.CategoryRepository;
 import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +22,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -52,7 +51,8 @@ class CategoryServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnCategoriesFromRepositoryAndCache() {
-        List<Category> expectedCategories = Instancio.ofList(Category.class).create();
+        int countCategories = 6;
+        List<Category> expectedCategories = InstancioTestEntityFactory.createCategoryList(countCategories);
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
         when(categoryRepository.findAll()).thenReturn(expectedCategories);
@@ -60,7 +60,9 @@ class CategoryServiceImplTest {
 
         List<Category> result = categoryService.getAll();
 
-        assertThat(result).isEqualTo(expectedCategories);
+        assertThat(result)
+                .hasSize(countCategories)
+                .isEqualTo(expectedCategories);
         verify(cacheService).getList(cacheKey, Category.class);
         verify(cacheService).put(cacheKey, expectedCategories);
         verify(categoryRepository).findAll();
@@ -68,14 +70,17 @@ class CategoryServiceImplTest {
 
     @Test
     void whenGetAll_thenReturnCategoriesFromCache() {
-        List<Category> expectedCategories = Instancio.ofList(Category.class).create();
+        int countCategories = 6;
+        List<Category> expectedCategories = InstancioTestEntityFactory.createCategoryList(countCategories);
         String cacheKey = CacheKeyGenerator.generateAllCategoriesKey();
 
         when(cacheService.getList(cacheKey, Category.class)).thenReturn(expectedCategories);
 
         List<Category> result = categoryService.getAll();
 
-        assertThat(result).isEqualTo(expectedCategories);
+        assertThat(result)
+                .hasSize(countCategories)
+                .isEqualTo(expectedCategories);
         verify(cacheService).getList(cacheKey, Category.class);
         verify(cacheService, never()).put(anyString(), any());
         verify(categoryRepository, never()).findAll();
@@ -84,7 +89,7 @@ class CategoryServiceImplTest {
     @Test
     void whenGetExistingCategoryById_thenReturnCategoryFromRepositoryAndCache() {
         Long categoryId = 1L;
-        Category expectedCategory = Instancio.of(Category.class).set(field(Category::getId), categoryId).create();
+        Category expectedCategory = InstancioTestEntityFactory.createCategory(categoryId);
         String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
         when(cacheService.get(cacheKey, Category.class)).thenReturn(null);
@@ -101,7 +106,7 @@ class CategoryServiceImplTest {
     @Test
     void whenGetExistingCategoryById_thenReturnCategoryFromCache() {
         Long categoryId = 1L;
-        Category expectedCategory = Instancio.of(Category.class).set(field(Category::getId), categoryId).create();
+        Category expectedCategory = InstancioTestEntityFactory.createCategory(categoryId);
         String cacheKey = CacheKeyGenerator.generateCategoryKey(categoryId);
 
         when(cacheService.get(cacheKey, Category.class)).thenReturn(expectedCategory);

@@ -1,8 +1,5 @@
 package com.my.repository;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.Rollback;
@@ -27,19 +24,11 @@ public abstract class AbstractPostgresqlRepositoryTest {
                     .withInitScript("init.sql")
                     .waitingFor(Wait.forListeningPort());
 
-    public static ObjectMapper objectMapper;
-
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgresContainer::getJdbcUrl);
         registry.add("spring.datasource.username", postgresContainer::getUsername);
         registry.add("spring.datasource.password", postgresContainer::getPassword);
         registry.add("spring.liquibase.contexts", () -> "test");
-    }
-
-    @BeforeAll
-    static void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 }

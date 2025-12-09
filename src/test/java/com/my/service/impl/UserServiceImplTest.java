@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.InstancioTestEntityFactory;
 import com.my.UserManagerMockHelper;
 import com.my.exception.AccessDeniedException;
 import com.my.exception.AlreadyExistException;
@@ -10,7 +11,6 @@ import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.UserRepository;
 import com.my.security.UserManager;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.instancio.Select.field;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -113,7 +112,7 @@ class UserServiceImplTest {
 
     @Test
     void whenLogout_thenClearLoggedInUser() {
-        User loggedInUser = new User(1L, "test@test.ru", "Test User", "password", UserRole.ROLE_USER);
+        User loggedInUser = InstancioTestEntityFactory.createUser();
         UserManager.setLoggedInUser(loggedInUser);
 
         userService.logout();
@@ -124,12 +123,15 @@ class UserServiceImplTest {
     @Test
     void whenGetAllAsAdmin_thenReturnAllUsers() {
         UserManagerMockHelper.setAdminUser();
-        List<User> expectedUsers = Instancio.ofList(User.class).create();
+        int countUsers = 55;
+        List<User> expectedUsers = InstancioTestEntityFactory.createUserList(countUsers);
         when(userRepository.findAll()).thenReturn(expectedUsers);
 
         List<User> result = userService.getAll();
 
-        assertThat(result).isEqualTo(expectedUsers);
+        assertThat(result)
+                .hasSize(countUsers)
+                .isEqualTo(expectedUsers);
         verify(userRepository).findAll();
     }
 
@@ -157,7 +159,7 @@ class UserServiceImplTest {
     void whenGetByIdAsAdmin_thenReturnUser() {
         UserManagerMockHelper.setAdminUser();
         Long userId = 1L;
-        User expectedUser = new User(userId, "test@test.ru", "Test User", "password", UserRole.ROLE_USER);
+        User expectedUser = InstancioTestEntityFactory.createUser(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
 
         User result = userService.getById(userId);
@@ -168,7 +170,7 @@ class UserServiceImplTest {
     @Test
     void whenGetByIdAsCurrentUser_thenReturnUser() {
         Long userId = 1L;
-        User currentUser = new User(userId, "me@test.ru", "Me", "password", UserRole.ROLE_USER);
+        User currentUser = InstancioTestEntityFactory.createUser(userId);
         UserManagerMockHelper.setRegularUser(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
 
@@ -290,10 +292,7 @@ class UserServiceImplTest {
     void whenDeleteAsAdmin_thenReturnSuccess() {
         UserManagerMockHelper.setAdminUser();
         Long userId = 1L;
-        User userToDelete = Instancio.of(User.class)
-                .set(field(User::getId), userId)
-                .set(field(User:: getRole), UserRole.ROLE_USER)
-                .create();
+        User userToDelete = InstancioTestEntityFactory.createRegularUser();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(userToDelete));
         when(userRepository.deleteById(userId)).thenReturn(true);
@@ -307,8 +306,8 @@ class UserServiceImplTest {
     @Test
     void whenDeleteAsCurrentUser_thenReturnSuccess() {
         Long userId = 1L;
-        User currentUser = new User(userId, "me@test.ru", "Me", "password", UserRole.ROLE_USER);
-        UserManagerMockHelper.setRegularUser(userId);
+        User currentUser = InstancioTestEntityFactory.createRegularUser(userId);
+        UserManagerMockHelper.setCurrentUser(currentUser);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(currentUser));
         when(userRepository.deleteById(userId)).thenReturn(true);
@@ -334,10 +333,7 @@ class UserServiceImplTest {
     @Test
     void whenDeleteLastAdminAsAdmin_thenThrowLastAdminException() {
         Long adminId = 1L;
-        User admin = Instancio.of(User.class)
-                .set(field(User::getId), adminId)
-                .set(field(User::getRole), UserRole.ROLE_ADMIN)
-                .create();
+        User admin = InstancioTestEntityFactory.createAdminUser(adminId);
         UserManagerMockHelper.setCurrentUser(admin);
 
         when(userRepository.findById(adminId)).thenReturn(Optional.of(admin));
@@ -373,14 +369,8 @@ class UserServiceImplTest {
     void whenPromoteToAdminAsAdmin_thenReturnPromotedUser() {
         UserManagerMockHelper.setAdminUser();
         Long userId = 2L;
-        User user = Instancio.of(User.class)
-                .set(field(User::getId), userId)
-                .set(field(User::getRole), UserRole.ROLE_USER)
-                .create();
-        User promotedUser = Instancio.of(User.class)
-                .set(field(User::getId), userId)
-                .set(field(User::getRole), UserRole.ROLE_ADMIN)
-                .create();
+        User user = InstancioTestEntityFactory.createRegularUser();
+        User promotedUser = InstancioTestEntityFactory.createAdminUser();
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.update(user)).thenReturn(promotedUser);
@@ -405,11 +395,11 @@ class UserServiceImplTest {
     @Test
     void whenDemoteFromAdminAsAdmin_thenReturnDemotedUser() {
         Long adminId = 1L;
-        User admin = new User(adminId, "admin@test.ru", "Admin", "password", UserRole.ROLE_ADMIN);
+        User admin = InstancioTestEntityFactory.createAdminUser(adminId);
         UserManagerMockHelper.setCurrentUser(admin);
         Long targetUserId = 2L;
-        User targetAdmin = new User(targetUserId, "target@test.ru", "Target", "password", UserRole.ROLE_ADMIN);
-        User demotedUser = new User(targetUserId, "target@test.ru", "Target", "password", UserRole.ROLE_USER);
+        User targetAdmin = InstancioTestEntityFactory.createAdminUser(targetUserId);
+        User demotedUser = InstancioTestEntityFactory.createRegularUser(targetUserId);
 
         when(userRepository.findById(targetUserId)).thenReturn(Optional.of(targetAdmin));
         when(userRepository.findByRole(UserRole.ROLE_ADMIN)).thenReturn(List.of(admin, targetAdmin));
@@ -424,7 +414,7 @@ class UserServiceImplTest {
     @Test
     void whenDemoteSelfFromAdmin_thenThrowAccessDeniedException() {
         Long adminId = 1L;
-        User admin = new User(adminId, "admin@test.ru", "Admin", "password", UserRole.ROLE_ADMIN);
+        User admin = InstancioTestEntityFactory.createAdminUser(adminId);
         UserManagerMockHelper.setCurrentUser(admin);
 
         assertThatThrownBy(() -> userService.demoteFromAdmin(adminId))
@@ -434,10 +424,10 @@ class UserServiceImplTest {
     @Test
     void whenDemoteLastAdmin_thenThrowLastAdminException() {
         Long adminId = 1L;
-        User admin = new User(adminId, "admin@test.ru", "Admin", "password", UserRole.ROLE_ADMIN);
+        User admin = InstancioTestEntityFactory.createAdminUser(adminId);
         UserManagerMockHelper.setCurrentUser(admin);
         Long targetUserId = 2L;
-        User targetAdmin = new User(targetUserId, "target@test.ru", "Target", "password", UserRole.ROLE_ADMIN);
+        User targetAdmin = InstancioTestEntityFactory.createAdminUser(targetUserId);
 
         when(userRepository.findByRole(UserRole.ROLE_ADMIN)).thenReturn(List.of(targetAdmin));
 
@@ -448,9 +438,7 @@ class UserServiceImplTest {
     @Test
     void whenGetAllAdminsAsAdmin_thenReturnAdmins() {
         UserManagerMockHelper.setAdminUser();
-        List<User> expectedAdmins = Instancio.ofList(User.class)
-                .set(field(User::getRole), UserRole.ROLE_ADMIN)
-                .create();
+        List<User> expectedAdmins = InstancioTestEntityFactory.createUserList(5);
         when(userRepository.findByRole(UserRole.ROLE_ADMIN)).thenReturn(expectedAdmins);
 
         List<User> result = userService.getAllAdmins();

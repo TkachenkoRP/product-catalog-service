@@ -1,5 +1,8 @@
 package com.my.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.CategoryRequestDto;
 import com.my.dto.CategoryResponseDto;
 import com.my.exception.AlreadyExistException;
@@ -7,16 +10,14 @@ import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.service.CategoryService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,22 +25,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
-class CategoryControllerTest extends AbstractControllerTest {
-    @Mock
+@WebMvcTest(CategoryController.class)
+class CategoryControllerTest {
+
+    private final MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper;
+
+    @MockBean
     private CategoryService categoryService;
 
-    @Mock
+    @MockBean
     private CategoryMapper categoryMapper;
 
-    @InjectMocks
-    private CategoryController categoryController;
-
-    @BeforeEach
-    void setUp() {
-        ExceptionHandlerController exceptionHandlerController = new ExceptionHandlerController();
-        setUpMockMvc(categoryController, exceptionHandlerController);
+    @Autowired
+    public CategoryControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+        this.mockMvc = mockMvc;
+        this.objectMapper = objectMapper;
     }
 
     @Test
@@ -56,15 +64,16 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.getAll()).thenReturn(categories);
         when(categoryMapper.toDto(categories)).thenReturn(responseDtos);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/category",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/category"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        List<CategoryResponseDto> result = extractListFromResponse(response, CategoryResponseDto.class);
+        ApiResponseDto<List<CategoryResponseDto>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .hasSize(2)
                 .extracting(CategoryResponseDto::name)
                 .containsExactly("Electronics", "Clothing");
@@ -81,15 +90,16 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.getById(categoryId)).thenReturn(category);
         when(categoryMapper.toDto(category)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/category/" + categoryId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/category/" + categoryId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
+        ApiResponseDto<CategoryResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
                 .containsExactly(categoryId, "Electronics");
 
@@ -102,13 +112,16 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.getById(nonExistingId))
                 .thenThrow(new EntityNotFoundException("Категория не найдена"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/category/" + nonExistingId,
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(get("/api/category/" + nonExistingId))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Категория не найдена");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Категория не найдена");
     }
 
     @Test
@@ -122,16 +135,18 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.save(categoryEntity)).thenReturn(savedCategory);
         when(categoryMapper.toDto(savedCategory)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/category",
-                requestDto,
-                HttpStatus.CREATED
-        );
+        String response = mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
+        ApiResponseDto<CategoryResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
                 .containsExactly(1L, "Sports");
 
@@ -147,42 +162,54 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.save(categoryEntity))
                 .thenThrow(new AlreadyExistException("Electronics уже существует"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/category",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Electronics уже существует");
+        ApiResponseDto<CategoryResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Electronics уже существует");
     }
 
     @Test
     void whenCreateCategoryWithBlankName_thenReturnBadRequest() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/category",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле name должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле name должно быть заполнено");
     }
 
     @Test
     void whenCreateCategoryWithShortName_thenReturnBadRequest() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("A");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/category",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Название категории должно быть от 2 до 100 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Название категории должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -190,14 +217,18 @@ class CategoryControllerTest extends AbstractControllerTest {
         String longName = "A".repeat(101);
         CategoryRequestDto requestDto = new CategoryRequestDto(longName);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/category",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/category")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Название категории должно быть от 2 до 100 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Название категории должно быть от 2 до 100 символов");
     }
 
     @Test
@@ -212,16 +243,18 @@ class CategoryControllerTest extends AbstractControllerTest {
         when(categoryService.update(eq(categoryId), eq(categoryEntity))).thenReturn(updatedCategory);
         when(categoryMapper.toDto(updatedCategory)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/category/" + categoryId,
-                requestDto,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(patch("/api/category/" + categoryId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        CategoryResponseDto result = extractDataFromResponse(response, CategoryResponseDto.class);
+        ApiResponseDto<CategoryResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(CategoryResponseDto::id, CategoryResponseDto::name)
                 .containsExactly(categoryId, "Updated Electronics");
 
@@ -233,13 +266,16 @@ class CategoryControllerTest extends AbstractControllerTest {
         Long categoryId = 1L;
         when(categoryService.deleteById(categoryId)).thenReturn(true);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.DELETE,
-                "/api/category/" + categoryId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(delete("/api/category/" + categoryId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Категория успешно удалена");
+        ApiResponseDto<Void> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Категория успешно удалена");
         verify(categoryService).deleteById(categoryId);
     }
 }

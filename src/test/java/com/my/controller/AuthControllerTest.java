@@ -1,218 +1,264 @@
 package com.my.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.InstancioTestEntityFactory;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.UserLoginRequestDto;
 import com.my.dto.UserRegisterRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
-import com.my.model.UserRole;
 import com.my.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
-class AuthControllerTest extends AbstractControllerTest {
-    @Mock
+@WebMvcTest(AuthController.class)
+class AuthControllerTest {
+
+    private final MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper;
+
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private UserMapper userMapper;
 
-    @InjectMocks
-    private AuthController authController;
-
-    @BeforeEach
-    void setUp() {
-        ExceptionHandlerController exceptionHandlerController = new ExceptionHandlerController();
-        setUpMockMvc(authController, exceptionHandlerController);
+    @Autowired
+    public AuthControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+        this.mockMvc = mockMvc;
+        this.objectMapper = objectMapper;
     }
 
     @Test
     void whenLoginWithValidCredentials_thenReturnUser() throws Exception {
-        UserLoginRequestDto requestDto = new UserLoginRequestDto("test@test.ru", "password123");
-        User user = new User(1L, "test@test.ru", "Test User", "password123", UserRole.ROLE_USER);
-        UserResponseDto responseDto = new UserResponseDto(1L, "test@test.ru", "Test User", "ROLE_USER");
+        User user = InstancioTestEntityFactory.createRegularUser(1L);
+        UserLoginRequestDto requestDto = InstancioTestEntityFactory.createUserLoginRequestDto(user);
+        UserResponseDto responseDto = InstancioTestEntityFactory.createUserResponseDto(user);
 
-        when(userService.login("test@test.ru", "password123")).thenReturn(user);
+        when(userService.login(any(), any())).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/login",
-                requestDto,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
-                .extracting(UserResponseDto::email, UserResponseDto::username)
-                .containsExactly("test@test.ru", "Test User");
+        assertThat(actualResponse.success()).isTrue();
+        assertThat(actualResponse.data()).isNotNull();
 
-        verify(userService).login("test@test.ru", "password123");
+        verify(userService).login(any(), any());
     }
 
     @Test
     void whenLoginWithInvalidCredentials_thenReturnNotFound() throws Exception {
-        UserLoginRequestDto requestDto = new UserLoginRequestDto("wrong@test.ru", "wrongpassword");
+        UserLoginRequestDto requestDto = InstancioTestEntityFactory.createUserLoginRequestDto();
 
-        when(userService.login("wrong@test.ru", "wrongpassword"))
+        when(userService.login(requestDto.email(), requestDto.password()))
                 .thenThrow(new EntityNotFoundException("Введены неверные данные"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/login",
-                requestDto,
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Введены неверные данные");
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Введены неверные данные");
     }
 
     @Test
     void whenLoginWithBlankEmail_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/login",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле email должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле email должно быть заполнено");
     }
 
     @Test
     void whenLoginWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("invalid-email", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/login",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Введите корректный email");
     }
 
     @Test
     void whenLoginWithBlankPassword_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("valid@email.com", "");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/login",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле password должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле password должно быть заполнено");
     }
 
     @Test
     void whenLogout_thenReturnSuccess() throws Exception {
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/logout",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Успешный выход из системы");
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Успешный выход из системы");
         verify(userService).logout();
     }
 
     @Test
     void whenRegisterWithAvailableEmail_thenReturnUser() throws Exception {
-        UserRegisterRequestDto requestDto = new UserRegisterRequestDto("newuser@test.ru", "New User", "password123");
-        User user = new User(1L, "newuser@test.ru", "New User", "password123", UserRole.ROLE_USER);
-        UserResponseDto responseDto = new UserResponseDto(1L, "newuser@test.ru", "New User", "ROLE_USER");
+        User user = InstancioTestEntityFactory.createRegularUser(1L);
+        UserRegisterRequestDto requestDto = InstancioTestEntityFactory.createUserRegisterRequestDto(user);
+        UserResponseDto responseDto = InstancioTestEntityFactory.createUserResponseDto(user);
 
-        when(userService.registration("newuser@test.ru", "New User", "password123")).thenReturn(user);
+        when(userService.registration(requestDto.email(), requestDto.username(), requestDto.password())).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/register",
-                requestDto,
-                HttpStatus.CREATED
-        );
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(UserResponseDto::email, UserResponseDto::username)
-                .containsExactly("newuser@test.ru", "New User");
+                .containsExactly(requestDto.email(), requestDto.username());
 
-        verify(userService).registration("newuser@test.ru", "New User", "password123");
+        verify(userService).registration(requestDto.email(), requestDto.username(), requestDto.password());
     }
 
     @Test
     void whenRegisterWithBlankEmail_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("", "ValidUsername", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/register",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле email должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле email должно быть заполнено");
     }
 
     @Test
     void whenRegisterWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("invalid-email", "ValidUsername", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/register",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Введите корректный email");
     }
 
     @Test
     void whenRegisterWithBlankUsername_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/register",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле username должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле username должно быть заполнено");
     }
 
     @Test
     void whenRegisterWithShortPassword_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "ValidUsername", "123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/auth/register",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Пароль должен содержать минимум 6 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Пароль должен содержать минимум 6 символов");
     }
 }

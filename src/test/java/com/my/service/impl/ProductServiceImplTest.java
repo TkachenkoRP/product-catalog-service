@@ -1,5 +1,6 @@
 package com.my.service.impl;
 
+import com.my.InstancioTestEntityFactory;
 import com.my.UserManagerMockHelper;
 import com.my.exception.EntityNotFoundException;
 import com.my.mapper.ProductMapper;
@@ -8,7 +9,6 @@ import com.my.model.ProductFilter;
 import com.my.repository.ProductRepository;
 import com.my.service.CacheService;
 import com.my.util.CacheKeyGenerator;
-import org.instancio.Instancio;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenGetAllWithoutFilters_thenFetchFromRepositoryAndCache() {
-        List<Product> expectedProducts = Instancio.ofList(Product.class).create();
+        List<Product> expectedProducts = InstancioTestEntityFactory.createProductList();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         when(cacheService.getList(cacheKey, Product.class)).thenReturn(null);
@@ -63,7 +63,7 @@ class ProductServiceImplTest {
 
     @Test
     void whenGetAllWithoutFilters_thenReturnFromCache() {
-        List<Product> expectedProducts = Instancio.ofList(Product.class).create();
+        List<Product> expectedProducts = InstancioTestEntityFactory.createProductList();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
 
         when(cacheService.getList(cacheKey, Product.class)).thenReturn(expectedProducts);
@@ -78,10 +78,9 @@ class ProductServiceImplTest {
 
     @Test
     void whenGetAllWithFilters_thenFetchFromRepositoryWithoutCache() {
-        ProductFilter filter = new ProductFilter(1L, null, null, null, null);
-        List<Product> expectedProducts = List.of(
-                new Product(1L, "Product 1", 1L, 1L, 99.99, 10)
-        );
+        Long id = 1L;
+        ProductFilter filter = new ProductFilter(id, null, null, null, null);
+        List<Product> expectedProducts = List.of(InstancioTestEntityFactory.createProduct(id));
 
         when(productRepository.findAll(filter)).thenReturn(expectedProducts);
 
@@ -96,7 +95,7 @@ class ProductServiceImplTest {
     @Test
     void whenGetExistingProductById_thenFetchFromRepositoryAndCache() {
         Long productId = 1L;
-        Product expectedProduct = new Product(productId, "Product 1", 1L, 1L, 99.99, 10);
+        Product expectedProduct = InstancioTestEntityFactory.createProduct(productId);
         String cacheKey = CacheKeyGenerator.generateProductKey(productId);
 
         when(cacheService.get(cacheKey, Product.class)).thenReturn(null);
@@ -112,7 +111,7 @@ class ProductServiceImplTest {
     @Test
     void whenGetExistingProductById_thenReturnFromCache() {
         Long productId = 1L;
-        Product expectedProduct = new Product(productId, "Product 1", 1L, 1L, 99.99, 10);
+        Product expectedProduct = InstancioTestEntityFactory.createProduct(productId);
         String cacheKey = CacheKeyGenerator.generateProductKey(productId);
 
         when(cacheService.get(cacheKey, Product.class)).thenReturn(expectedProduct);

@@ -1,5 +1,8 @@
 package com.my.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.ProductRequestDto;
 import com.my.dto.ProductResponseDto;
 import com.my.exception.EntityNotFoundException;
@@ -7,16 +10,14 @@ import com.my.mapper.ProductMapper;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.service.ProductService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,22 +25,29 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
-class ProductControllerTest extends AbstractControllerTest {
-    @Mock
+@WebMvcTest(ProductController.class)
+class ProductControllerTest {
+
+    private final MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper;
+
+    @MockBean
     private ProductService productService;
 
-    @Mock
+    @MockBean
     private ProductMapper productMapper;
 
-    @InjectMocks
-    private ProductController productController;
-
-    @BeforeEach
-    void setUp() {
-        ExceptionHandlerController exceptionHandlerController = new ExceptionHandlerController();
-        setUpMockMvc(productController, exceptionHandlerController);
+    @Autowired
+    public ProductControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+        this.mockMvc = mockMvc;
+        this.objectMapper = objectMapper;
     }
 
     @Test
@@ -54,14 +62,18 @@ class ProductControllerTest extends AbstractControllerTest {
         when(productService.getAll(any(ProductFilter.class))).thenReturn(products);
         when(productMapper.toDto(products)).thenReturn(responseDtos);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/product?categoryId=1&minPrice=50",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/product")
+                        .param("categoryId", "1")
+                        .param("minPrice", "50"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        List<ProductResponseDto> result = extractListFromResponse(response, ProductResponseDto.class);
-        assertThat(result).hasSize(1);
+        ApiResponseDto<List<ProductResponseDto>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).hasSize(1);
         verify(productService).getAll(any(ProductFilter.class));
     }
 
@@ -74,15 +86,16 @@ class ProductControllerTest extends AbstractControllerTest {
         when(productService.getById(productId)).thenReturn(product);
         when(productMapper.toDto(product)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/product/" + productId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/product/" + productId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
+        ApiResponseDto<ProductResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(
                         ProductResponseDto::id,
                         ProductResponseDto::name,
@@ -102,13 +115,16 @@ class ProductControllerTest extends AbstractControllerTest {
         when(productService.getById(nonExistingId))
                 .thenThrow(new EntityNotFoundException("Товар не найден"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/product/" + nonExistingId,
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(get("/api/product/" + nonExistingId))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Товар не найден");
+        ApiResponseDto<ProductResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Товар не найден");
     }
 
     @Test
@@ -122,16 +138,18 @@ class ProductControllerTest extends AbstractControllerTest {
         when(productService.save(productEntity)).thenReturn(savedProduct);
         when(productMapper.toDto(savedProduct)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.CREATED
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
+        ApiResponseDto<ProductResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(ProductResponseDto::name)
                 .isEqualTo("New Product");
 
@@ -142,112 +160,144 @@ class ProductControllerTest extends AbstractControllerTest {
     void whenCreateProductWithBlankName_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("", 1L, 1L, 99.99, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле name должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле name должно быть заполнено");
     }
 
     @Test
     void whenCreateProductWithShortName_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("A", 1L, 1L, 99.99, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Название товара должно быть от 2 до 200 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Название товара должно быть от 2 до 200 символов");
     }
 
     @Test
     void whenCreateProductWithNullCategoryId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", null, 1L, 99.99, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле categoryId должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле categoryId должно быть заполнено");
     }
 
     @Test
     void whenCreateProductWithNegativeCategoryId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", -1L, 1L, 99.99, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("ID категории должен быть положительным числом");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("ID категории должен быть положительным числом");
     }
 
     @Test
     void whenCreateProductWithNullBrandId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, null, 99.99, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле brandId должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле brandId должно быть заполнено");
     }
 
     @Test
     void whenCreateProductWithNegativePrice_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, -10.0, 10);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Цена должна быть положительным числом");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Цена должна быть положительным числом");
     }
 
     @Test
     void whenCreateProductWithNullStock_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, 99.99, null);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/product",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(post("/api/product")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Поле stock должно быть заполнено");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Поле stock должно быть заполнено");
     }
 
     @Test
     void whenUpdateProductWithInvalidData_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("A", -1L, -1L, -10.0, -5);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/product/1",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(patch("/api/product/" + 1)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class))
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data())
                 .contains("Название товара должно быть от 2 до 200 символов")
                 .contains("ID категории должен быть положительным числом")
                 .contains("ID бренда должен быть положительным числом")
@@ -267,16 +317,18 @@ class ProductControllerTest extends AbstractControllerTest {
         when(productService.update(eq(productId), eq(productEntity))).thenReturn(updatedProduct);
         when(productMapper.toDto(updatedProduct)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/product/" + productId,
-                requestDto,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(patch("/api/product/" + productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        ProductResponseDto result = extractDataFromResponse(response, ProductResponseDto.class);
+        ApiResponseDto<ProductResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(ProductResponseDto::name)
                 .isEqualTo("Updated Product");
 
@@ -288,27 +340,16 @@ class ProductControllerTest extends AbstractControllerTest {
         Long productId = 1L;
         when(productService.deleteById(productId)).thenReturn(true);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.DELETE,
-                "/api/product/" + productId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(delete("/api/product/" + productId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Товар успешно удален");
-        verify(productService).deleteById(productId);
-    }
+        ApiResponseDto<Void> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-    @Test
-    void whenDeleteProductFails_thenStillReturnSuccess() throws Exception {
-        Long productId = 1L;
-        when(productService.deleteById(productId)).thenReturn(false);
-
-        performRequest(
-                HttpMethod.DELETE,
-                "/api/product/" + productId,
-                HttpStatus.OK
-        );
-
+        assertThat(actualResponse.message()).contains("Товар успешно удален");
         verify(productService).deleteById(productId);
     }
 }

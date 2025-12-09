@@ -1,5 +1,9 @@
 package com.my.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.InstancioTestEntityFactory;
+import com.my.dto.ApiResponseDto;
 import com.my.dto.UserRequestDto;
 import com.my.dto.UserResponseDto;
 import com.my.exception.AccessDeniedException;
@@ -9,67 +13,65 @@ import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
-class UserControllerTest extends AbstractControllerTest {
-    @Mock
+@WebMvcTest(UserController.class)
+class UserControllerTest {
+
+    private final MockMvc mockMvc;
+
+    private final ObjectMapper objectMapper;
+
+    @MockBean
     private UserService userService;
 
-    @Mock
+    @MockBean
     private UserMapper userMapper;
 
-    @InjectMocks
-    private UserController userController;
-
-    @BeforeEach
-    void setUp() {
-        ExceptionHandlerController exceptionHandlerController = new ExceptionHandlerController();
-        setUpMockMvc(userController, exceptionHandlerController);
+    @Autowired
+    public UserControllerTest(MockMvc mockMvc, ObjectMapper objectMapper) {
+        this.mockMvc = mockMvc;
+        this.objectMapper = objectMapper;
     }
 
     @Test
     void whenGetAllUsers_thenReturnUserList() throws Exception {
-        List<User> users = Arrays.asList(
-                new User(1L, "admin@test.ru", "Admin User", "admin123", UserRole.ROLE_ADMIN),
-                new User(2L, "user@test.ru", "Regular User", "user123", UserRole.ROLE_USER)
-        );
-        List<UserResponseDto> responseDtos = Arrays.asList(
-                new UserResponseDto(1L, "admin@test.ru", "Admin User", "ROLE_ADMIN"),
-                new UserResponseDto(2L, "user@test.ru", "Regular User", "ROLE_USER")
-        );
+        int countUsers = 10;
+        List<User> users = InstancioTestEntityFactory.createUserList(countUsers);
+        List<UserResponseDto> responseDtos = InstancioTestEntityFactory.createUserResponseDtos(users);
 
         when(userService.getAll()).thenReturn(users);
         when(userMapper.toDto(users)).thenReturn(responseDtos);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/user",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/user"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        List<UserResponseDto> result = extractListFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<List<UserResponseDto>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
-                .hasSize(2)
-                .extracting(UserResponseDto::email)
-                .containsExactly("admin@test.ru", "user@test.ru");
+        assertThat(actualResponse.data())
+                .hasSize(countUsers);
 
         verify(userService).getAll();
     }
@@ -77,28 +79,29 @@ class UserControllerTest extends AbstractControllerTest {
     @Test
     void whenGetUserById_thenReturnUser() throws Exception {
         Long userId = 1L;
-        User user = new User(userId, "test@test.ru", "Test User", "password", UserRole.ROLE_USER);
-        UserResponseDto responseDto = new UserResponseDto(userId, "test@test.ru", "Test User", "ROLE_USER");
+        User user = InstancioTestEntityFactory.createUser(userId);
+        UserResponseDto responseDto = InstancioTestEntityFactory.createUserResponseDto(user);
 
         when(userService.getById(userId)).thenReturn(user);
         when(userMapper.toDto(user)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/user/" + userId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(get("/api/user/" + userId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(
                         UserResponseDto::id,
                         UserResponseDto::email,
                         UserResponseDto::username,
                         UserResponseDto::role
                 )
-                .containsExactly(userId, "test@test.ru", "Test User", "ROLE_USER");
+                .containsExactly(userId, user.getEmail(), user.getUsername(), user.getRole().name());
 
         verify(userService).getById(userId);
     }
@@ -109,39 +112,44 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.getById(nonExistingId))
                 .thenThrow(new EntityNotFoundException("Пользователь не найден"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.GET,
-                "/api/user/" + nonExistingId,
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(get("/api/user/" + nonExistingId))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Пользователь не найден");
     }
 
     @Test
     void whenUpdateUser_thenReturnUpdatedUser() throws Exception {
         Long userId = 1L;
-        UserRequestDto requestDto = new UserRequestDto("updated@test.ru", "Updated User", "newpassword");
-        User userEntity = new User("updated@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
-        User updatedUser = new User(userId, "updated@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
-        UserResponseDto responseDto = new UserResponseDto(userId, "updated@test.ru", "Updated User", "ROLE_USER");
+        User userEntity = InstancioTestEntityFactory.createRegularUser(userId);
+        UserRequestDto requestDto = InstancioTestEntityFactory.createUserRequestDto(userEntity);
+        User updatedUser = InstancioTestEntityFactory.createRegularUser(userId);
+        UserResponseDto responseDto = InstancioTestEntityFactory.createUserResponseDto(updatedUser);
 
         when(userMapper.toEntity(requestDto)).thenReturn(userEntity);
         when(userService.update(eq(userId), eq(userEntity))).thenReturn(updatedUser);
         when(userMapper.toDto(updatedUser)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/user/" + userId,
-                requestDto,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(patch("/api/user/" + userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(UserResponseDto::email, UserResponseDto::username)
-                .containsExactly("updated@test.ru", "Updated User");
+                .containsExactly(responseDto.email(), responseDto.username());
 
         verify(userService).update(userId, userEntity);
     }
@@ -150,27 +158,36 @@ class UserControllerTest extends AbstractControllerTest {
     void whenUpdateUserWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("invalid-email", "ValidUsername", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/user/1",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(patch("/api/user/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Введите корректный email");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Введите корректный email");
     }
 
     @Test
     void whenUpdateUserWithShortUsername_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", "Ab", "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/user/1",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
-        assertThat(extractListFromResponse(response, String.class)).contains("Имя пользователя должно быть от 3 до 50 символов");
+        String response = mockMvc.perform(patch("/api/user/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
+
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Имя пользователя должно быть от 3 до 50 символов");
     }
 
     @Test
@@ -178,28 +195,36 @@ class UserControllerTest extends AbstractControllerTest {
         String longUsername = "A".repeat(51);
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", longUsername, "password123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/user/1",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(patch("/api/user/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Имя пользователя должно быть от 3 до 50 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Имя пользователя должно быть от 3 до 50 символов");
     }
 
     @Test
     void whenUpdateUserWithShortPassword_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", "ValidUsername", "123");
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.PATCH,
-                "/api/user/1",
-                requestDto,
-                HttpStatus.BAD_REQUEST
-        );
+        String response = mockMvc.perform(patch("/api/user/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(extractListFromResponse(response, String.class)).contains("Пароль должен содержать минимум 6 символов");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.data()).contains("Пароль должен содержать минимум 6 символов");
     }
 
     @Test
@@ -207,13 +232,16 @@ class UserControllerTest extends AbstractControllerTest {
         Long userId = 1L;
         when(userService.delete(userId)).thenReturn(true);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.DELETE,
-                "/api/user/" + userId,
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(delete("/api/user/" + userId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Пользователь успешно удален");
+        ApiResponseDto<List<Void>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Пользователь успешно удален");
         verify(userService).delete(userId);
     }
 
@@ -226,15 +254,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.promoteToAdmin(userId)).thenReturn(promotedUser);
         when(userMapper.toDto(promotedUser)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/promote",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/promote"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(
                         UserResponseDto::id,
                         UserResponseDto::email,
@@ -252,13 +281,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.promoteToAdmin(nonExistingUserId))
                 .thenThrow(new EntityNotFoundException("Пользователь не найден"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + nonExistingUserId + "/promote",
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(post("/api/user/" + nonExistingUserId + "/promote"))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Пользователь не найден");
 
         verify(userService).promoteToAdmin(nonExistingUserId);
     }
@@ -269,13 +301,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.promoteToAdmin(userId))
                 .thenThrow(new AccessDeniedException("Требуются права администратора"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/promote",
-                HttpStatus.FORBIDDEN
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/promote"))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Требуются права администратора");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Требуются права администратора");
 
         verify(userService).promoteToAdmin(userId);
     }
@@ -289,15 +324,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.demoteFromAdmin(userId)).thenReturn(demotedUser);
         when(userMapper.toDto(demotedUser)).thenReturn(responseDto);
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/demote",
-                HttpStatus.OK
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/demote"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        UserResponseDto result = extractDataFromResponse(response, UserResponseDto.class);
+        ApiResponseDto<UserResponseDto> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
 
-        assertThat(result)
+        assertThat(actualResponse.data())
                 .extracting(
                         UserResponseDto::id,
                         UserResponseDto::email,
@@ -315,13 +351,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.demoteFromAdmin(nonExistingUserId))
                 .thenThrow(new EntityNotFoundException("Пользователь не найден"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + nonExistingUserId + "/demote",
-                HttpStatus.NOT_FOUND
-        );
+        String response = mockMvc.perform(post("/api/user/" + nonExistingUserId + "/demote"))
+                .andExpect(status().isNotFound())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Пользователь не найден");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Пользователь не найден");
 
         verify(userService).demoteFromAdmin(nonExistingUserId);
     }
@@ -332,13 +371,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.demoteFromAdmin(userId))
                 .thenThrow(new AccessDeniedException("Требуются права администратора"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/demote",
-                HttpStatus.FORBIDDEN
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/demote"))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Требуются права администратора");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Требуются права администратора");
 
         verify(userService).demoteFromAdmin(userId);
     }
@@ -349,13 +391,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.demoteFromAdmin(userId))
                 .thenThrow(new AccessDeniedException("Нельзя снять права администратора у самого себя"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/demote",
-                HttpStatus.FORBIDDEN
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/demote"))
+                .andExpect(status().isForbidden())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Нельзя снять права администратора у самого себя");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Нельзя снять права администратора у самого себя");
 
         verify(userService).demoteFromAdmin(userId);
     }
@@ -366,13 +411,16 @@ class UserControllerTest extends AbstractControllerTest {
         when(userService.demoteFromAdmin(userId))
                 .thenThrow(new LastAdminException("Нельзя лишить прав последнего администратора"));
 
-        MockHttpServletResponse response = performRequest(
-                HttpMethod.POST,
-                "/api/user/" + userId + "/demote",
-                HttpStatus.CONFLICT
-        );
+        String response = mockMvc.perform(post("/api/user/" + userId + "/demote"))
+                .andExpect(status().isConflict())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(getResponseMessage(response)).contains("Ошибка изменения прав: Нельзя лишить прав последнего администратора");
+        ApiResponseDto<List<String>> actualResponse = objectMapper.readValue(response, new TypeReference<>() {
+        });
+
+        assertThat(actualResponse.message()).contains("Ошибка изменения прав: Нельзя лишить прав последнего администратора");
 
         verify(userService).demoteFromAdmin(userId);
     }
