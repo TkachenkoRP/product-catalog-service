@@ -11,14 +11,18 @@ spring:
     contexts: dev
     default-schema: catalog_schema
     liquibase-schema: liquibase_schema
-redis:
-  host: localhost
-  port: 6379
-  password: pasSw0Rd
-  database: 0
-  timeout: 2000
-  cache:
-    ttl:
-      minutes: 30
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: pasSw0Rd
+      database: 0
+      timeout: 2000
+      jedis:
+        pool:
+          max-active: 128
+      cache:
+        ttl:
+          minutes: 30
 audition:
   enabled: true
