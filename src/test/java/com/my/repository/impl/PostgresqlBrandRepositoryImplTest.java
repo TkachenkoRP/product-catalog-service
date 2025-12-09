@@ -3,6 +3,7 @@ package com.my.repository.impl;
 import com.my.model.Brand;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
 import com.my.repository.BrandRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisplayName("Интеграционные тесты репозитория брендов")
 class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
 
     private final BrandRepository brandRepository;
@@ -22,7 +24,8 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
-    void whenGetAllBrands_thenReturnAllBrands() {
+    @DisplayName("findAll() - Получение всех брендов")
+    void whenFindAllBrands_thenReturnAllBrands() {
         List<Brand> brands = brandRepository.findAll();
 
         assertThat(brands)
@@ -33,7 +36,8 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
-    void whenGetBrandById_withExistingId_thenReturnBrand() {
+    @DisplayName("findById() - Получение бренда по существующему ID")
+    void whenFindBrandById_withExistingId_thenReturnBrand() {
         List<Brand> brands = brandRepository.findAll();
         Long existingBrandId = brands.get(0).getId();
         String expectedName = brands.get(0).getName();
@@ -48,13 +52,15 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
-    void whenGetBrandById_withNonExistingId_thenReturnEmpty() {
+    @DisplayName("findById() - Поиск несуществующего бренда")
+    void whenFindBrandById_withNonExistingId_thenReturnEmpty() {
         Optional<Brand> brandOpt = brandRepository.findById(999L);
 
         assertThat(brandOpt).isEmpty();
     }
 
     @Test
+    @DisplayName("save() - Сохранение нового бренда")
     void whenSaveNewBrand_thenBrandIsPersisted() {
         Brand newBrand = new Brand("Sony");
 
@@ -70,6 +76,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("update() - Обновление существующего бренда")
     void whenUpdateExistingBrand_thenBrandIsUpdated() {
         List<Brand> brands = brandRepository.findAll();
         Brand existingBrand = brands.get(0);
@@ -93,6 +100,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("update() - Обновление несуществующего бренда")
     void whenUpdateBrand_withNonExistingId_thenThrowException() {
         Brand nonExistentBrand = new Brand(999L, "Non Existent");
 
@@ -104,6 +112,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление бренда по ID")
     void whenDeleteBrandById_withExistingId_thenBrandIsDeleted() {
         Brand brandToDelete = new Brand("To Delete");
         Brand savedBrand = brandRepository.save(brandToDelete);
@@ -120,6 +129,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление несуществующего бренда")
     void whenDeleteBrandById_withNonExistingId_thenReturnFalse() {
         boolean deleted = brandRepository.deleteById(999L);
 
@@ -127,6 +137,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("existsByNameIgnoreCase() - Проверка существования бренда по имени")
     void whenCheckBrandExistsByName_withExistingName_thenReturnTrue() {
         boolean exists = brandRepository.existsByNameIgnoreCase("samsung");
 
@@ -134,6 +145,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("existsByNameIgnoreCase() - Проверка отсутствия бренда по имени")
     void whenCheckBrandExistsByName_withNonExistingName_thenReturnFalse() {
         boolean exists = brandRepository.existsByNameIgnoreCase("nonexistent");
 
@@ -141,6 +153,7 @@ class PostgresqlBrandRepositoryImplTest extends AbstractPostgresqlRepositoryTest
     }
 
     @Test
+    @DisplayName("save() - Сохранение бренда с дублирующимся именем")
     void whenSaveBrand_withDuplicateName_thenThrowException() {
         Brand brand1 = new Brand("Unique Brand");
         brandRepository.save(brand1);

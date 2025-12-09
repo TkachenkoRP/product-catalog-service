@@ -10,6 +10,7 @@ import com.my.exception.EntityNotFoundException;
 import com.my.mapper.CategoryMapper;
 import com.my.model.Category;
 import com.my.service.CategoryService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CategoryController.class)
+@DisplayName("Тесты контроллера категорий")
 class CategoryControllerTest {
 
     private final MockMvc mockMvc;
@@ -51,6 +53,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/category - Получение всех категорий")
     void whenGetAllCategories_thenReturnCategoryList() throws Exception {
         List<Category> categories = Arrays.asList(
                 new Category(1L, "Electronics"),
@@ -82,6 +85,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/category/{id} - Получение категории по ID")
     void whenGetCategoryById_thenReturnCategory() throws Exception {
         Long categoryId = 1L;
         Category category = new Category(categoryId, "Electronics");
@@ -107,6 +111,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/category/{id} - Несуществующая категория возвращает 404")
     void whenGetNonExistingCategoryById_thenReturnNotFound() throws Exception {
         Long nonExistingId = 999L;
         when(categoryService.getById(nonExistingId))
@@ -125,6 +130,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/category - Создание новой категории")
     void whenCreateCategory_thenReturnCreatedCategory() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("Sports");
         Category categoryEntity = new Category("Sports");
@@ -154,6 +160,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/category - Попытка создания категории с существующим именем")
     void whenCreateCategoryWithExistingName_thenReturnBadRequest() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("Electronics");
         Category categoryEntity = new Category("Electronics");
@@ -177,6 +184,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/category - Валидация: пустое название категории")
     void whenCreateCategoryWithBlankName_thenReturnBadRequest() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("");
 
@@ -195,6 +203,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/category - Валидация: короткое название категории")
     void whenCreateCategoryWithShortName_thenReturnBadRequest() throws Exception {
         CategoryRequestDto requestDto = new CategoryRequestDto("A");
 
@@ -213,6 +222,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/category - Валидация: длинное название категории")
     void whenCreateCategoryWithLongName_thenReturnBadRequest() throws Exception {
         String longName = "A".repeat(101);
         CategoryRequestDto requestDto = new CategoryRequestDto(longName);
@@ -232,6 +242,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/category/{id} - Обновление категории")
     void whenUpdateCategory_thenReturnUpdatedCategory() throws Exception {
         Long categoryId = 1L;
         CategoryRequestDto requestDto = new CategoryRequestDto("Updated Electronics");
@@ -262,6 +273,7 @@ class CategoryControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/category/{id} - Успешное удаление категории")
     void whenDeleteCategorySuccessfully_thenReturnSuccess() throws Exception {
         Long categoryId = 1L;
         when(categoryService.deleteById(categoryId)).thenReturn(true);

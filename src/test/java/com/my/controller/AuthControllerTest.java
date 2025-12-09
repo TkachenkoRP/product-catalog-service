@@ -11,6 +11,7 @@ import com.my.exception.EntityNotFoundException;
 import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.service.UserService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -29,6 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
+@DisplayName("Тесты контроллера аутентификации")
 class AuthControllerTest {
 
     private final MockMvc mockMvc;
@@ -48,6 +50,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/login - Успешный вход с валидными учетными данными")
     void whenLoginWithValidCredentials_thenReturnUser() throws Exception {
         User user = InstancioTestEntityFactory.createRegularUser(1L);
         UserLoginRequestDto requestDto = InstancioTestEntityFactory.createUserLoginRequestDto(user);
@@ -74,6 +77,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/login - Попытка входа с неверными учетными данными")
     void whenLoginWithInvalidCredentials_thenReturnNotFound() throws Exception {
         UserLoginRequestDto requestDto = InstancioTestEntityFactory.createUserLoginRequestDto();
 
@@ -95,6 +99,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/login - Валидация: пустой email")
     void whenLoginWithBlankEmail_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("", "password123");
 
@@ -113,6 +118,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/login - Валидация: невалидный email")
     void whenLoginWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("invalid-email", "password123");
 
@@ -131,6 +137,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/login - Валидация: пустой пароль")
     void whenLoginWithBlankPassword_thenReturnBadRequest() throws Exception {
         UserLoginRequestDto requestDto = new UserLoginRequestDto("valid@email.com", "");
 
@@ -149,6 +156,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/logout - Успешный выход из системы")
     void whenLogout_thenReturnSuccess() throws Exception {
         String response = mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isOk())
@@ -164,6 +172,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/register - Успешная регистрация пользователя")
     void whenRegisterWithAvailableEmail_thenReturnUser() throws Exception {
         User user = InstancioTestEntityFactory.createRegularUser(1L);
         UserRegisterRequestDto requestDto = InstancioTestEntityFactory.createUserRegisterRequestDto(user);
@@ -191,6 +200,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/register - Валидация: пустой email при регистрации")
     void whenRegisterWithBlankEmail_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("", "ValidUsername", "password123");
 
@@ -209,6 +219,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/register - Валидация: невалидный email при регистрации")
     void whenRegisterWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("invalid-email", "ValidUsername", "password123");
 
@@ -227,6 +238,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/register - Валидация: пустое имя пользователя при регистрации")
     void whenRegisterWithBlankUsername_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "", "password123");
 
@@ -245,6 +257,7 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/auth/register - Валидация: короткий пароль при регистрации")
     void whenRegisterWithShortPassword_thenReturnBadRequest() throws Exception {
         UserRegisterRequestDto requestDto = new UserRegisterRequestDto("valid@email.com", "ValidUsername", "123");
 

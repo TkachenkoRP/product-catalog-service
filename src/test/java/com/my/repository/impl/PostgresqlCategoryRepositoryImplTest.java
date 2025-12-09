@@ -3,6 +3,7 @@ package com.my.repository.impl;
 import com.my.model.Category;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
 import com.my.repository.CategoryRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -12,6 +13,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisplayName("Интеграционные тесты репозитория категорий")
 class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
     private final CategoryRepository categoryRepository;
 
@@ -21,7 +23,8 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
-    void whenGetAllCategories_thenReturnAllCategories() {
+    @DisplayName("findAll() - Получение всех категорий")
+    void whenFindAllCategories_thenReturnAllCategories() {
         List<Category> categories = categoryRepository.findAll();
 
         assertThat(categories)
@@ -32,7 +35,8 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
-    void whenGetCategoryById_withExistingId_thenReturnCategory() {
+    @DisplayName("findById() - Получение категории по существующему ID")
+    void whenFindCategoryById_withExistingId_thenReturnCategory() {
         List<Category> categories = categoryRepository.findAll();
         Long existingCategoryId = categories.get(0).getId();
 
@@ -46,13 +50,15 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
-    void whenGetCategoryById_withNonExistingId_thenReturnEmpty() {
+    @DisplayName("findById() - Поиск несуществующей категории")
+    void whenFindCategoryById_withNonExistingId_thenReturnEmpty() {
         Optional<Category> categoryOpt = categoryRepository.findById(999L);
 
         assertThat(categoryOpt).isEmpty();
     }
 
     @Test
+    @DisplayName("save() - Сохранение новой категории")
     void whenSaveNewCategory_thenCategoryIsPersisted() {
         Category newCategory = new Category("Home Appliances");
 
@@ -68,6 +74,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("update() - Обновление существующей категории")
     void whenUpdateExistingCategory_thenCategoryIsUpdated() {
         List<Category> categories = categoryRepository.findAll();
         Category existingCategory = categories.get(0);
@@ -90,6 +97,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("update() - Обновление несуществующей категории")
     void whenUpdateCategory_withNonExistingId_thenThrowException() {
         Category nonExistentCategory = new Category(999L, "Non Existent");
 
@@ -101,6 +109,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление категории по ID")
     void whenDeleteCategoryById_withExistingId_thenCategoryIsDeleted() {
         Category categoryToDelete = new Category("To Delete");
         Category savedCategory = categoryRepository.save(categoryToDelete);
@@ -115,6 +124,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление несуществующей категории")
     void whenDeleteCategoryById_withNonExistingId_thenReturnFalse() {
         boolean deleted = categoryRepository.deleteById(999L);
 
@@ -122,6 +132,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("existsByNameIgnoreCase() - Проверка существования категории по имени")
     void whenCheckCategoryExistsByName_withExistingName_thenReturnTrue() {
         boolean exists = categoryRepository.existsByNameIgnoreCase("electronics");
 
@@ -129,6 +140,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("existsByNameIgnoreCase() - Проверка отсутствия категории по имени")
     void whenCheckCategoryExistsByName_withNonExistingName_thenReturnFalse() {
         boolean exists = categoryRepository.existsByNameIgnoreCase("nonexistent");
 
@@ -136,6 +148,7 @@ class PostgresqlCategoryRepositoryImplTest extends AbstractPostgresqlRepositoryT
     }
 
     @Test
+    @DisplayName("save() - Сохранение категории с дублирующимся именем")
     void whenSaveCategory_withDuplicateName_thenThrowException() {
         Category category1 = new Category("Unique Category");
         categoryRepository.save(category1);

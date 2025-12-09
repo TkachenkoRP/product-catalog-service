@@ -13,6 +13,7 @@ import com.my.mapper.UserMapper;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.service.UserService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
+@DisplayName("Тесты контроллера пользователей")
 class UserControllerTest {
 
     private final MockMvc mockMvc;
@@ -53,6 +55,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/user - Получение всех пользователей")
     void whenGetAllUsers_thenReturnUserList() throws Exception {
         int countUsers = 10;
         List<User> users = InstancioTestEntityFactory.createUserList(countUsers);
@@ -77,6 +80,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/user/{id} - Получение пользователя по ID")
     void whenGetUserById_thenReturnUser() throws Exception {
         Long userId = 1L;
         User user = InstancioTestEntityFactory.createUser(userId);
@@ -107,6 +111,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/user/{id} - Несуществующий пользователь возвращает 404")
     void whenGetNonExistingUserById_thenReturnNotFound() throws Exception {
         Long nonExistingId = 999L;
         when(userService.getById(nonExistingId))
@@ -125,6 +130,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/user/{id} - Обновление пользователя")
     void whenUpdateUser_thenReturnUpdatedUser() throws Exception {
         Long userId = 1L;
         User userEntity = InstancioTestEntityFactory.createRegularUser(userId);
@@ -155,6 +161,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/user/{id} - Валидация: невалидный email")
     void whenUpdateUserWithInvalidEmail_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("invalid-email", "ValidUsername", "password123");
 
@@ -173,6 +180,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/user/{id} - Валидация: короткое имя пользователя")
     void whenUpdateUserWithShortUsername_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", "Ab", "password123");
 
@@ -191,6 +199,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/user/{id} - Валидация: длинное имя пользователя")
     void whenUpdateUserWithLongUsername_thenReturnBadRequest() throws Exception {
         String longUsername = "A".repeat(51);
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", longUsername, "password123");
@@ -210,6 +219,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/user/{id} - Валидация: короткий пароль")
     void whenUpdateUserWithShortPassword_thenReturnBadRequest() throws Exception {
         UserRequestDto requestDto = new UserRequestDto("valid@email.com", "ValidUsername", "123");
 
@@ -228,6 +238,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/user/{id} - Удаление пользователя")
     void whenDeleteUser_thenReturnSuccess() throws Exception {
         Long userId = 1L;
         when(userService.delete(userId)).thenReturn(true);
@@ -246,6 +257,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/promote - Повышение пользователя до администратора")
     void whenPromoteUserToAdmin_thenReturnPromotedUser() throws Exception {
         Long userId = 2L;
         User promotedUser = new User(userId, "user@test.ru", "Regular User", "password", UserRole.ROLE_ADMIN);
@@ -276,6 +288,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/promote - Попытка повышения несуществующего пользователя")
     void whenPromoteNonExistingUserToAdmin_thenReturnNotFound() throws Exception {
         Long nonExistingUserId = 999L;
         when(userService.promoteToAdmin(nonExistingUserId))
@@ -296,6 +309,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/promote - Попытка повышения без прав администратора")
     void whenPromoteUserToAdminWithoutAdminRights_thenReturnForbidden() throws Exception {
         Long userId = 2L;
         when(userService.promoteToAdmin(userId))
@@ -316,6 +330,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/demote - Понижение администратора до пользователя")
     void whenDemoteUserFromAdmin_thenReturnDemotedUser() throws Exception {
         Long userId = 1L;
         User demotedUser = new User(userId, "admin@test.ru", "Admin User", "password", UserRole.ROLE_USER);
@@ -346,6 +361,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/demote - Попытка понижения несуществующего пользователя")
     void whenDemoteNonExistingUserFromAdmin_thenReturnNotFound() throws Exception {
         Long nonExistingUserId = 999L;
         when(userService.demoteFromAdmin(nonExistingUserId))
@@ -366,6 +382,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/demote - Попытка понижения без прав администратора")
     void whenDemoteUserFromAdminWithoutAdminRights_thenReturnForbidden() throws Exception {
         Long userId = 1L;
         when(userService.demoteFromAdmin(userId))
@@ -386,6 +403,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/demote - Попытка понижения самого себя")
     void whenDemoteSelfFromAdmin_thenReturnForbidden() throws Exception {
         Long userId = 1L;
         when(userService.demoteFromAdmin(userId))
@@ -406,6 +424,7 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/user/{id}/demote - Попытка понижения последнего администратора")
     void whenDemoteLastAdmin_thenReturnConflict() throws Exception {
         Long userId = 1L;
         when(userService.demoteFromAdmin(userId))

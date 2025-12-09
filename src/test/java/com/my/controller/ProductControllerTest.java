@@ -10,6 +10,7 @@ import com.my.mapper.ProductMapper;
 import com.my.model.Product;
 import com.my.model.ProductFilter;
 import com.my.service.ProductService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductController.class)
+@DisplayName("Тесты контроллера товаров")
 class ProductControllerTest {
 
     private final MockMvc mockMvc;
@@ -51,6 +53,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/product - Получение всех товаров с фильтрацией")
     void whenGetAllProductsWithFilter_thenReturnFilteredProducts() throws Exception {
         List<Product> products = List.of(
                 new Product(1L, "Product 1", 1L, 1L, 99.99, 10)
@@ -78,6 +81,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/product/{id} - Получение товара по ID")
     void whenGetProductById_thenReturnProduct() throws Exception {
         Long productId = 1L;
         Product product = new Product(productId, "Product 1", 1L, 1L, 99.99, 10);
@@ -110,6 +114,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/product/{id} - Несуществующий товар возвращает 404")
     void whenGetNonExistingProductById_thenReturnNotFound() throws Exception {
         Long nonExistingId = 999L;
         when(productService.getById(nonExistingId))
@@ -128,6 +133,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Создание нового товара")
     void whenCreateProduct_thenReturnCreatedProduct() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("New Product", 1L, 1L, 99.99, 10);
         Product productEntity = new Product("New Product", 1L, 1L, 99.99, 10);
@@ -157,6 +163,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: пустое название товара")
     void whenCreateProductWithBlankName_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("", 1L, 1L, 99.99, 10);
 
@@ -175,6 +182,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: короткое название товара (<2 символов)")
     void whenCreateProductWithShortName_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("A", 1L, 1L, 99.99, 10);
 
@@ -193,6 +201,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: категория не указана")
     void whenCreateProductWithNullCategoryId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", null, 1L, 99.99, 10);
 
@@ -211,6 +220,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: отрицательный ID категории")
     void whenCreateProductWithNegativeCategoryId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", -1L, 1L, 99.99, 10);
 
@@ -229,6 +239,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: бренд не указан")
     void whenCreateProductWithNullBrandId_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, null, 99.99, 10);
 
@@ -247,6 +258,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: отрицательная цена")
     void whenCreateProductWithNegativePrice_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, -10.0, 10);
 
@@ -265,6 +277,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/product - Валидация: количество на складе не указано")
     void whenCreateProductWithNullStock_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("Valid Name", 1L, 1L, 99.99, null);
 
@@ -283,6 +296,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/product/{id} - Валидация всех полей при обновлении")
     void whenUpdateProductWithInvalidData_thenReturnBadRequest() throws Exception {
         ProductRequestDto requestDto = new ProductRequestDto("A", -1L, -1L, -10.0, -5);
 
@@ -306,6 +320,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/product/{id} - Успешное обновление товара")
     void whenUpdateProduct_thenReturnUpdatedProduct() throws Exception {
         Long productId = 1L;
         ProductRequestDto requestDto = new ProductRequestDto("Updated Product", 2L, 2L, 199.99, 15);
@@ -336,6 +351,7 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/product/{id} - Успешное удаление товара")
     void whenDeleteProductSuccessfully_thenReturnSuccess() throws Exception {
         Long productId = 1L;
         when(productService.deleteById(productId)).thenReturn(true);

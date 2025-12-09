@@ -10,6 +10,7 @@ import com.my.repository.ProductRepository;
 import com.my.service.CacheService;
 import com.my.util.CacheKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -28,6 +29,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Тесты сервиса товаров")
 class ProductServiceImplTest {
     @Mock
     private ProductRepository productRepository;
@@ -46,6 +48,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех товаров без фильтров (кэш пустой)")
     void whenGetAllWithoutFilters_thenFetchFromRepositoryAndCache() {
         List<Product> expectedProducts = InstancioTestEntityFactory.createProductList();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
@@ -62,6 +65,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех товаров без фильтров из кэша")
     void whenGetAllWithoutFilters_thenReturnFromCache() {
         List<Product> expectedProducts = InstancioTestEntityFactory.createProductList();
         String cacheKey = CacheKeyGenerator.generateAllProductsKey();
@@ -77,6 +81,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение товаров с фильтрами (без кэширования)")
     void whenGetAllWithFilters_thenFetchFromRepositoryWithoutCache() {
         Long id = 1L;
         ProductFilter filter = new ProductFilter(id, null, null, null, null);
@@ -93,6 +98,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение товара по ID (кэш пустой)")
     void whenGetExistingProductById_thenFetchFromRepositoryAndCache() {
         Long productId = 1L;
         Product expectedProduct = InstancioTestEntityFactory.createProduct(productId);
@@ -109,6 +115,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение товара по ID из кэша")
     void whenGetExistingProductById_thenReturnFromCache() {
         Long productId = 1L;
         Product expectedProduct = InstancioTestEntityFactory.createProduct(productId);
@@ -125,6 +132,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Попытка получения несуществующего товара")
     void whenGetNonExistingProductById_thenThrowException() {
         Long productId = 999L;
 
@@ -137,6 +145,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("save() - Сохранение нового товара")
     void whenSaveProduct_thenReturnSavedProductAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Product newProduct = new Product("New Product", 1L, 1L, 99.99, 10);
@@ -153,6 +162,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление товара")
     void whenUpdateProduct_thenReturnUpdatedProductAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long productId = 1L;
@@ -174,6 +184,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Успешное удаление товара")
     void whenDeleteProductSuccessfully_thenReturnTrueAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long productId = 1L;
@@ -191,6 +202,7 @@ class ProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Неудачное удаление товара")
     void whenDeleteProductFails_thenReturnFalseAndDoNotInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long productId = 1L;

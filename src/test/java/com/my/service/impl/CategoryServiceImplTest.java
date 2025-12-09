@@ -12,6 +12,7 @@ import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Тесты сервиса категорий")
 class CategoryServiceImplTest {
     @Mock
     private CategoryRepository categoryRepository;
@@ -50,6 +52,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех категорий (кэш пустой)")
     void whenGetAll_thenReturnCategoriesFromRepositoryAndCache() {
         int countCategories = 6;
         List<Category> expectedCategories = InstancioTestEntityFactory.createCategoryList(countCategories);
@@ -69,6 +72,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех категорий из кэша")
     void whenGetAll_thenReturnCategoriesFromCache() {
         int countCategories = 6;
         List<Category> expectedCategories = InstancioTestEntityFactory.createCategoryList(countCategories);
@@ -87,6 +91,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение категории по ID (кэш пустой)")
     void whenGetExistingCategoryById_thenReturnCategoryFromRepositoryAndCache() {
         Long categoryId = 1L;
         Category expectedCategory = InstancioTestEntityFactory.createCategory(categoryId);
@@ -104,6 +109,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение категории по ID из кэша")
     void whenGetExistingCategoryById_thenReturnCategoryFromCache() {
         Long categoryId = 1L;
         Category expectedCategory = InstancioTestEntityFactory.createCategory(categoryId);
@@ -120,6 +126,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Попытка получения несуществующей категории")
     void whenGetNonExistingCategoryById_thenThrowException() {
         Long categoryId = 999L;
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
@@ -130,6 +137,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("save() - Сохранение новой категории")
     void whenSaveNewCategory_thenReturnSavedCategoryAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Category newCategory = new Category("Sports");
@@ -147,6 +155,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("save() - Попытка сохранения существующей категории")
     void whenSaveExistingCategory_thenThrowException() {
         UserManagerMockHelper.setAdminUser();
         Category existingCategory = new Category("Electronics");
@@ -160,6 +169,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление категории")
     void whenUpdateCategory_thenReturnUpdatedCategoryAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
@@ -182,6 +192,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Попытка обновления категории на существующее имя")
     void whenUpdateCategoryWithExistingName_thenThrowException() {
         UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
@@ -199,6 +210,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление категории без связанных товаров")
     void whenDeleteCategoryWithoutProducts_thenReturnTrueAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
@@ -217,6 +229,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Неудачное удаление категории")
     void whenDeleteCategoryFails_thenReturnFalseAndDoNotInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
@@ -232,6 +245,7 @@ class CategoryServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Попытка удаления категории с связанными товарами")
     void whenDeleteCategoryWithProducts_thenReturnFalse() {
         UserManagerMockHelper.setAdminUser();
         Long categoryId = 1L;
@@ -247,6 +261,7 @@ class CategoryServiceImplTest {
 
 
     @Test
+    @DisplayName("existsByName() - Проверка существования категории по имени")
     void whenExistsByName_thenDelegateToRepository() {
         String categoryName = "Electronics";
         when(categoryRepository.existsByNameIgnoreCase(categoryName)).thenReturn(true);

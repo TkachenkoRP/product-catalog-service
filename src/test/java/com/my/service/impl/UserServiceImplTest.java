@@ -13,6 +13,7 @@ import com.my.repository.UserRepository;
 import com.my.security.UserManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Тесты сервиса пользователей")
 class UserServiceImplTest {
     @Mock
     private UserRepository userRepository;
@@ -51,6 +53,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("registration() - Успешная регистрация с доступным email")
     void whenRegistrationWithAvailableEmail_thenReturnSavedUserAndSetLoggedIn() {
         String email = "newuser@test.ru";
         String password = "password123";
@@ -68,6 +71,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("registration() - Попытка регистрации с существующим email")
     void whenRegistrationWithExistingEmail_thenThrowException() {
         String email = "existing@test.ru";
         String password = "password123";
@@ -83,6 +87,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("login() - Успешный вход с валидными учетными данными")
     void whenLoginWithValidCredentials_thenReturnUserAndSetLoggedIn() {
         String email = "test@test.ru";
         String password = "password123";
@@ -97,6 +102,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("login() - Попытка входа с неверными учетными данными")
     void whenLoginWithInvalidCredentials_thenThrowException() {
         String email = "test@test.ru";
         String password = "wrongpassword";
@@ -111,6 +117,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("logout() - Успешный выход из системы")
     void whenLogout_thenClearLoggedInUser() {
         User loggedInUser = InstancioTestEntityFactory.createUser();
         UserManager.setLoggedInUser(loggedInUser);
@@ -121,6 +128,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех пользователей администратором")
     void whenGetAllAsAdmin_thenReturnAllUsers() {
         UserManagerMockHelper.setAdminUser();
         int countUsers = 55;
@@ -136,6 +144,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Попытка получения всех пользователей обычным пользователем")
     void whenGetAllAsRegularUser_thenThrowAccessDeniedException() {
         UserManagerMockHelper.setRegularUser(1L);
 
@@ -146,6 +155,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Попытка получения всех пользователей неавторизованным пользователем")
     void whenGetAllAsUnauthenticated_thenThrowAccessDeniedException() {
         UserManagerMockHelper.clearUser();
 
@@ -156,8 +166,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение пользователя администратором")
     void whenGetByIdAsAdmin_thenReturnUser() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setCurrentUser(InstancioTestEntityFactory.createAdminUser(2L));
         Long userId = 1L;
         User expectedUser = InstancioTestEntityFactory.createUser(userId);
         when(userRepository.findById(userId)).thenReturn(Optional.of(expectedUser));
@@ -168,6 +179,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение собственного профиля")
     void whenGetByIdAsCurrentUser_thenReturnUser() {
         Long userId = 1L;
         User currentUser = InstancioTestEntityFactory.createUser(userId);
@@ -181,6 +193,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Попытка получения профиля другого пользователя")
     void whenGetByIdAsOtherUser_thenThrowAccessDeniedException() {
         Long currentUserId = 1L;
         Long targetUserId = 2L;
@@ -193,8 +206,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Попытка получения несуществующего пользователя")
     void whenGetNonExistingUserById_thenThrowException() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(2L);
         Long userId = 999L;
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
@@ -204,8 +218,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление пользователя администратором")
     void whenUpdateAsAdmin_thenReturnUpdatedUser() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(3L);
         Long userId = 1L;
         User sourceUser = new User("updated@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
         User existingUser = new User(userId, "old@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
@@ -223,6 +238,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление собственного профиля")
     void whenUpdateAsCurrentUser_thenReturnUpdatedUser() {
         Long userId = 1L;
         User currentUser = new User(userId, "me@test.ru", "Me", "password", UserRole.ROLE_USER);
@@ -240,6 +256,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Попытка обновления профиля другого пользователя")
     void whenUpdateAsOtherUser_thenThrowAccessDeniedException() {
         Long currentUserId = 1L;
         Long targetUserId = 2L;
@@ -255,8 +272,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление пользователя с тем же email")
     void whenUpdateUserWithSameEmail_thenReturnUpdatedUser() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(2L);
         Long userId = 1L;
         User sourceUser = new User("same@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
         User existingUser = new User(userId, "same@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
@@ -272,8 +290,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Попытка обновления на существующий email другого пользователя")
     void whenUpdateUserWithExistingEmail_thenThrowException() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(2L);
         Long userId = 1L;
         User sourceUser = new User("existing@test.ru", "Updated User", "newpassword", UserRole.ROLE_USER);
         User existingUser = new User(userId, "old@test.ru", "Old User", "oldpassword", UserRole.ROLE_USER);
@@ -289,8 +308,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("delete() - Удаление пользователя администратором")
     void whenDeleteAsAdmin_thenReturnSuccess() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(2L);
         Long userId = 1L;
         User userToDelete = InstancioTestEntityFactory.createRegularUser();
 
@@ -304,6 +324,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("delete() - Удаление собственного профиля")
     void whenDeleteAsCurrentUser_thenReturnSuccess() {
         Long userId = 1L;
         User currentUser = InstancioTestEntityFactory.createRegularUser(userId);
@@ -319,6 +340,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("delete() - Попытка удаления другого пользователя")
     void whenDeleteAsOtherUser_thenThrowAccessDeniedException() {
         Long currentUserId = 1L;
         Long targetUserId = 2L;
@@ -331,6 +353,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("delete() - Попытка удаления последнего администратора")
     void whenDeleteLastAdminAsAdmin_thenThrowLastAdminException() {
         Long adminId = 1L;
         User admin = InstancioTestEntityFactory.createAdminUser(adminId);
@@ -346,6 +369,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("isEmailAvailable() - Проверка доступности email")
     void whenCheckEmailAvailable_thenReturnTrue() {
         String email = "available@test.ru";
         when(userRepository.isPresentByEmail(email)).thenReturn(false);
@@ -356,6 +380,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("isEmailAvailable() - Проверка недоступности email")
     void whenCheckEmailNotAvailable_thenReturnFalse() {
         String email = "taken@test.ru";
         when(userRepository.isPresentByEmail(email)).thenReturn(true);
@@ -366,8 +391,9 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("promoteToAdmin() - Повышение пользователя до администратора")
     void whenPromoteToAdminAsAdmin_thenReturnPromotedUser() {
-        UserManagerMockHelper.setAdminUser();
+        UserManagerMockHelper.setAdminUser(1L);
         Long userId = 2L;
         User user = InstancioTestEntityFactory.createRegularUser();
         User promotedUser = InstancioTestEntityFactory.createAdminUser();
@@ -382,6 +408,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("promoteToAdmin() - Попытка повышения без прав администратора")
     void whenPromoteToAdminAsRegularUser_thenThrowAccessDeniedException() {
         UserManagerMockHelper.setRegularUser(1L);
         Long userId = 2L;
@@ -393,6 +420,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("demoteFromAdmin() - Понижение администратора до пользователя")
     void whenDemoteFromAdminAsAdmin_thenReturnDemotedUser() {
         Long adminId = 1L;
         User admin = InstancioTestEntityFactory.createAdminUser(adminId);
@@ -412,6 +440,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("demoteFromAdmin() - Попытка понижения самого себя")
     void whenDemoteSelfFromAdmin_thenThrowAccessDeniedException() {
         Long adminId = 1L;
         User admin = InstancioTestEntityFactory.createAdminUser(adminId);
@@ -422,6 +451,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("demoteFromAdmin() - Попытка понижения последнего администратора")
     void whenDemoteLastAdmin_thenThrowLastAdminException() {
         Long adminId = 1L;
         User admin = InstancioTestEntityFactory.createAdminUser(adminId);
@@ -436,6 +466,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAllAdmins() - Получение всех администраторов")
     void whenGetAllAdminsAsAdmin_thenReturnAdmins() {
         UserManagerMockHelper.setAdminUser();
         List<User> expectedAdmins = InstancioTestEntityFactory.createUserList(5);
@@ -448,6 +479,7 @@ class UserServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAllAdmins() - Попытка получения всех администраторов обычным пользователем")
     void whenGetAllAdminsAsRegularUser_thenThrowAccessDeniedException() {
         UserManagerMockHelper.setRegularUser(1L);
 

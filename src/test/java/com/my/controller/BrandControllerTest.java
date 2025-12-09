@@ -10,6 +10,7 @@ import com.my.exception.EntityNotFoundException;
 import com.my.mapper.BrandMapper;
 import com.my.model.Brand;
 import com.my.service.BrandService;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(BrandController.class)
+@DisplayName("Тесты контроллера брендов")
 class BrandControllerTest {
 
     private final MockMvc mockMvc;
@@ -51,6 +53,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/brand - Получение всех брендов")
     void whenGetAllBrands_thenReturnBrandList() throws Exception {
         List<Brand> brands = Arrays.asList(
                 new Brand(1L, "Samsung"),
@@ -82,6 +85,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/brand/{id} - Получение бренда по ID")
     void whenGetBrandById_thenReturnBrand() throws Exception {
         Long brandId = 1L;
         Brand brand = new Brand(brandId, "Samsung");
@@ -107,6 +111,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/brand/{id} - Несуществующий бренд возвращает 404")
     void whenGetNonExistingBrandById_thenReturnNotFound() throws Exception {
         Long nonExistingId = 999L;
         when(brandService.getById(nonExistingId))
@@ -125,6 +130,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/brand - Создание нового бренда")
     void whenCreateBrand_thenReturnCreatedBrand() throws Exception {
         BrandRequestDto requestDto = new BrandRequestDto("Sony");
         Brand brandEntity = new Brand("Sony");
@@ -154,6 +160,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/brand - Попытка создания бренда с существующим именем")
     void whenCreateBrandWithExistingName_thenReturnBadRequest() throws Exception {
         BrandRequestDto requestDto = new BrandRequestDto("Samsung");
         Brand brandEntity = new Brand("Samsung");
@@ -177,6 +184,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/brand - Валидация: пустое название бренда")
     void whenCreateBrandWithBlankName_thenReturnBadRequest() throws Exception {
         BrandRequestDto requestDto = new BrandRequestDto("");
 
@@ -195,6 +203,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/brand - Валидация: короткое название бренда")
     void whenCreateBrandWithShortName_thenReturnBadRequest() throws Exception {
         BrandRequestDto requestDto = new BrandRequestDto("A");
 
@@ -213,6 +222,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/brand - Валидация: длинное название бренда")
     void whenCreateBrandWithLongName_thenReturnBadRequest() throws Exception {
         String longName = "A".repeat(101);
         BrandRequestDto requestDto = new BrandRequestDto(longName);
@@ -232,6 +242,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("PATCH /api/brand/{id} - Обновление бренда")
     void whenUpdateBrand_thenReturnUpdatedBrand() throws Exception {
         Long brandId = 1L;
         BrandRequestDto requestDto = new BrandRequestDto("Updated Samsung");
@@ -262,6 +273,7 @@ class BrandControllerTest {
     }
 
     @Test
+    @DisplayName("DELETE /api/brand/{id} - Успешное удаление бренда")
     void whenDeleteBrand_thenReturnSuccess() throws Exception {
         Long brandId = 1L;
         when(brandService.deleteById(brandId)).thenReturn(true);

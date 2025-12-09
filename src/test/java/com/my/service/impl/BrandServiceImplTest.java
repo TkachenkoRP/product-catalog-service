@@ -12,6 +12,7 @@ import com.my.service.CacheService;
 import com.my.service.CatalogValidationService;
 import com.my.util.CacheKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -29,6 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@DisplayName("Тесты сервиса брендов")
 class BrandServiceImplTest {
     @Mock
     private BrandRepository brandRepository;
@@ -50,6 +52,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех брендов (кэш пустой)")
     void whenGetAll_thenReturnBrandsFromRepositoryAndCache() {
         int countBrands = 5;
         List<Brand> expectedBrands = InstancioTestEntityFactory.createBrandList(countBrands);
@@ -69,6 +72,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("getAll() - Получение всех брендов из кэша")
     void whenGetAll_thenReturnBrandsFromCache() {
         int countBrands = 5;
         List<Brand> expectedBrands = InstancioTestEntityFactory.createBrandList(countBrands);
@@ -87,6 +91,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение бренда по ID (кэш пустой)")
     void whenGetExistingBrandById_thenReturnBrandFromRepositoryAndCache() {
         Long brandId = 1L;
         Brand expectedBrand = InstancioTestEntityFactory.createBrand(brandId);
@@ -104,6 +109,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Получение бренда по ID из кэша")
     void whenGetExistingBrandById_thenReturnBrandFromCache() {
         Long brandId = 1L;
         Brand expectedBrand = InstancioTestEntityFactory.createBrand(brandId);
@@ -120,6 +126,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("getById() - Попытка получения несуществующего бренда")
     void whenGetNonExistingBrandById_thenThrowException() {
         Long brandId = 999L;
         when(brandRepository.findById(brandId)).thenReturn(Optional.empty());
@@ -130,6 +137,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("save() - Сохранение нового бренда")
     void whenSaveNewBrand_thenReturnSavedBrandAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Brand newBrand = new Brand("Sony");
@@ -147,6 +155,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("save() - Попытка сохранения существующего бренда")
     void whenSaveExistingBrand_thenThrowException() {
         UserManagerMockHelper.setAdminUser();
         Brand existingBrand = new Brand("Samsung");
@@ -160,6 +169,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("update() - Обновление бренда")
     void whenUpdateBrand_thenReturnUpdatedBrandAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
@@ -182,6 +192,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление бренда без связанных товаров")
     void whenDeleteBrandWithoutProducts_thenReturnTrueAndInvalidateCache() {
         UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
@@ -200,6 +211,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("deleteById() - Попытка удаления бренда с связанными товарами")
     void whenDeleteBrandWithProducts_thenReturnFalse() {
         UserManagerMockHelper.setAdminUser();
         Long brandId = 1L;
@@ -213,6 +225,7 @@ class BrandServiceImplTest {
     }
 
     @Test
+    @DisplayName("existsByName() - Проверка существования бренда по имени")
     void whenExistsByName_thenDelegateToRepository() {
         String brandName = "Samsung";
         when(brandRepository.existsByNameIgnoreCase(brandName)).thenReturn(true);

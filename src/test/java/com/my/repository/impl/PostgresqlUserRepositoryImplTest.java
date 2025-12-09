@@ -1,9 +1,10 @@
 package com.my.repository.impl;
 
+import com.my.InstancioTestEntityFactory;
 import com.my.model.User;
 import com.my.model.UserRole;
 import com.my.repository.AbstractPostgresqlRepositoryTest;
-import org.instancio.Instancio;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -11,8 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.instancio.Select.field;
 
+@DisplayName("Интеграционные тесты репозитория пользователей")
 class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
     private final PostgresqlUserRepositoryImpl userRepository;
 
@@ -22,7 +23,8 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
-    void whenGetAllUsers_thenReturnAllUsers() {
+    @DisplayName("findAll() - Получение всех пользователей")
+    void whenFindAllUsers_thenReturnAllUsers() {
         List<User> users = userRepository.findAll();
 
         assertThat(users)
@@ -33,7 +35,8 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
-    void whenGetUserById_withExistingId_thenReturnUser() {
+    @DisplayName("findById() - Получение пользователя по существующему ID")
+    void whenFindUserById_withExistingId_thenReturnUser() {
         List<User> allUsers = userRepository.findAll();
         Long existingUserId = allUsers.get(0).getId();
 
@@ -49,12 +52,14 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
-    void whenGetUserById_withNonExistingId_thenReturnEmpty() {
+    @DisplayName("findById() - Поиск несуществующего пользователя")
+    void whenFindUserById_withNonExistingId_thenReturnEmpty() {
         Optional<User> userOpt = userRepository.findById(999L);
         assertThat(userOpt).isEmpty();
     }
 
     @Test
+    @DisplayName("save() - Сохранение нового пользователя")
     void whenSaveNewUser_thenUserIsPersisted() {
         User newUser = new User("newuser@test.ru", "New User", "password123", UserRole.ROLE_USER);
 
@@ -70,6 +75,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("update() - Обновление существующего пользователя")
     void whenUpdateExistingUser_thenUserIsUpdated() {
         List<User> users = userRepository.findAll();
         User existingUser = users.get(0);
@@ -98,6 +104,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("update() - Обновление несуществующего пользователя")
     void whenUpdateUser_withNonExistingId_thenThrowException() {
         User nonExistentUser = new User(999L, "none@test.ru", "None", "pass", UserRole.ROLE_USER);
 
@@ -109,6 +116,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление пользователя по ID")
     void whenDeleteUserById_withExistingId_thenUserIsDeleted() {
         User userToDelete = new User("todelete@test.ru", "To Delete", "pass123", UserRole.ROLE_USER);
         User savedUser = userRepository.save(userToDelete);
@@ -123,6 +131,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление несуществующего пользователя")
     void whenDeleteUserById_withNonExistingId_thenReturnFalse() {
         boolean deleted = userRepository.deleteById(999L);
 
@@ -130,6 +139,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("isPresentByEmail() - Проверка существующего email")
     void whenCheckEmailExists_withExistingEmail_thenReturnTrue() {
         boolean exists = userRepository.isPresentByEmail("testadmin@test.ru");
 
@@ -137,6 +147,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("isPresentByEmail() - Проверка несуществующего email")
     void whenCheckEmailExists_withNonExistingEmail_thenReturnFalse() {
         boolean exists = userRepository.isPresentByEmail("nonexistent@test.ru");
 
@@ -144,6 +155,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("getByEmailAndPassword() - Поиск пользователя с валидными учетными данными")
     void whenGetUserByEmailAndPassword_withValidCredentials_thenReturnUser() {
         Optional<User> userOpt = userRepository.getByEmailAndPassword("testadmin@test.ru", "admin123");
 
@@ -155,6 +167,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("getByEmailAndPassword() - Поиск пользователя с неверным паролем")
     void whenGetUserByEmailAndPassword_withWrongPassword_thenReturnEmpty() {
         Optional<User> userOpt = userRepository.getByEmailAndPassword("testadmin@test.ru", "wrongpassword");
 
@@ -162,6 +175,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("getByEmailAndPassword() - Поиск пользователя с неверным email")
     void whenGetUserByEmailAndPassword_withWrongEmail_thenReturnEmpty() {
         Optional<User> userOpt = userRepository.getByEmailAndPassword("wrong@test.ru", "admin123");
 
@@ -169,6 +183,7 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("save() - Сохранение пользователя с дублирующимся email")
     void whenSaveUser_withDuplicateEmail_thenThrowException() {
         User user1 = new User("duplicate@test.ru", "User One", "pass1", UserRole.ROLE_USER);
         userRepository.save(user1);
@@ -183,15 +198,10 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("findByRole() - Поиск пользователей с ролью ADMIN")
     void whenFindByRole_withAdminRole_thenReturnAllAdmins() {
-        User admin1 = Instancio.of(User.class)
-                .ignore(field(User::getId))
-                .set(field(User::getRole), UserRole.ROLE_ADMIN)
-                .create();
-        User admin2 = Instancio.of(User.class)
-                .ignore(field(User::getId))
-                .set(field(User::getRole), UserRole.ROLE_ADMIN)
-                .create();
+        User admin1 = InstancioTestEntityFactory.createAdminUser();
+        User admin2 = InstancioTestEntityFactory.createAdminUser();
         userRepository.save(admin1);
         userRepository.save(admin2);
 
@@ -205,15 +215,10 @@ class PostgresqlUserRepositoryImplTest extends AbstractPostgresqlRepositoryTest 
     }
 
     @Test
+    @DisplayName("findByRole() - Поиск пользователей с ролью USER")
     void whenFindByRole_withUserRole_thenReturnAllUsers() {
-        User user1 = Instancio.of(User.class)
-                .ignore(field(User::getId))
-                .set(field(User::getRole), UserRole.ROLE_USER)
-                .create();
-        User user2 = Instancio.of(User.class)
-                .ignore(field(User::getId))
-                .set(field(User::getRole), UserRole.ROLE_USER)
-                .create();
+        User user1 = InstancioTestEntityFactory.createRegularUser();
+        User user2 = InstancioTestEntityFactory.createRegularUser();
         userRepository.save(user1);
         userRepository.save(user2);
 

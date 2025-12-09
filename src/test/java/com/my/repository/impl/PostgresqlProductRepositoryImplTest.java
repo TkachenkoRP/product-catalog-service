@@ -9,6 +9,7 @@ import com.my.repository.BrandRepository;
 import com.my.repository.CategoryRepository;
 import com.my.repository.ProductRepository;
 import org.assertj.core.api.SoftAssertions;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -17,6 +18,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisplayName("Интеграционные тесты репозитория товаров")
 class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTest {
 
     private final ProductRepository productRepository;
@@ -31,7 +33,8 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
-    void whenGetAllProducts_thenReturnAllProducts() {
+    @DisplayName("findAll() - Получение всех товаров")
+    void whenFindAllProducts_thenReturnAllProducts() {
         List<Product> products = productRepository.findAll(null);
 
         SoftAssertions softly = new SoftAssertions();
@@ -54,7 +57,8 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
-    void whenGetProductById_withExistingId_thenReturnProduct() {
+    @DisplayName("findById() - Получение товара по существующему ID")
+    void whenFindProductById_withExistingId_thenReturnProduct() {
         List<Product> products = productRepository.findAll(null);
         Long existingProductId = products.get(0).getId();
 
@@ -72,13 +76,15 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
-    void whenGetProductById_withNonExistingId_thenReturnEmpty() {
+    @DisplayName("findById() - Поиск несуществующего товара")
+    void whenFindProductById_withNonExistingId_thenReturnEmpty() {
         Optional<Product> productOpt = productRepository.findById(999L);
 
         assertThat(productOpt).isEmpty();
     }
 
     @Test
+    @DisplayName("save() - Сохранение нового товара")
     void whenSaveNewProduct_thenProductIsPersisted() {
         List<Category> categories = categoryRepository.findAll();
         List<Brand> brands = brandRepository.findAll();
@@ -115,6 +121,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("update() - Обновление существующего товара")
     void whenUpdateExistingProduct_thenProductIsUpdated() {
         List<Product> products = productRepository.findAll(null);
         Product existingProduct = products.get(0);
@@ -159,6 +166,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("update() - Обновление несуществующего товара")
     void whenUpdateProduct_withNonExistingId_thenThrowException() {
         Product nonExistentProduct = new Product(999L, "Non Existent", 1L, 1L, 99.99, 10);
 
@@ -170,6 +178,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление товара по ID")
     void whenDeleteProductById_withExistingId_thenProductIsDeleted() {
         List<Category> categories = categoryRepository.findAll();
         List<Brand> brands = brandRepository.findAll();
@@ -193,6 +202,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("deleteById() - Удаление несуществующего товара")
     void whenDeleteProductById_withNonExistingId_thenReturnFalse() {
         boolean deleted = productRepository.deleteById(999L);
 
@@ -200,6 +210,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("save() - Сохранение товара с невалидными внешними ключами")
     void whenSaveProduct_withInvalidForeignKey_thenThrowException() {
         Product invalidProduct = new Product("Invalid Product", 999L, 999L, 99.99, 10);
 
@@ -211,6 +222,7 @@ class PostgresqlProductRepositoryImplTest extends AbstractPostgresqlRepositoryTe
     }
 
     @Test
+    @DisplayName("save() - Сохранение нескольких товаров с одинаковым названием")
     void whenSaveMultipleProducts_withSameName_thenAllAreSaved() {
         List<Category> categories = categoryRepository.findAll();
         List<Brand> brands = brandRepository.findAll();
