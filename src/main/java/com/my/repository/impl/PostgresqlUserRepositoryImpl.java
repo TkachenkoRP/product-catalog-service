@@ -17,6 +17,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Реализация репозитория для работы с пользователями в PostgreSQL базе данных.
+ */
 @Repository
 public class PostgresqlUserRepositoryImpl implements UserRepository {
 
@@ -127,6 +130,13 @@ public class PostgresqlUserRepositoryImpl implements UserRepository {
         return jdbcTemplate.query(sql, (rs, rowNum) -> mapResultSetToUser(rs), role.name());
     }
 
+    /**
+     * Преобразует строку ResultSet в объект User.
+     *
+     * @param rs ResultSet с данными из базы данных
+     * @return объект User
+     * @throws SQLException если происходит ошибка при чтении данных из ResultSet
+     */
     private User mapResultSetToUser(ResultSet rs) throws SQLException {
         return new User(
                 rs.getLong("id"),

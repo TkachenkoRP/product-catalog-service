@@ -6,6 +6,15 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO для передачи данных о товаре в запросах API.
+ *
+ * @param name       название товара
+ * @param categoryId идентификатор категории товара
+ * @param brandId    идентификатор бренда товара
+ * @param price      цена товара
+ * @param stock      количество товара на складе
+ */
 public record ProductRequestDto(
         @NotBlank(message = "Поле name должно быть заполнено",
                 groups = ValidationGroups.Create.class)

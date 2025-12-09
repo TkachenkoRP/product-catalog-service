@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Реализация репозитория для работы с товарами в PostgreSQL базе данных.
+ */
 @Repository
 public class PostgresqlProductRepositoryImpl implements ProductRepository {
 
@@ -183,6 +186,13 @@ public class PostgresqlProductRepositoryImpl implements ProductRepository {
         return Boolean.TRUE.equals(jdbcTemplate.queryForObject(sql, Boolean.class, categoryId));
     }
 
+    /**
+     * Преобразует строку ResultSet в объект Product.
+     *
+     * @param rs ResultSet с данными из базы данных
+     * @return объект Product
+     * @throws SQLException если происходит ошибка при чтении данных из ResultSet
+     */
     private Product mapResultSetToProduct(ResultSet rs) throws SQLException {
         return new Product(
                 rs.getLong("id"),

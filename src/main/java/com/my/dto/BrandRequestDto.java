@@ -4,7 +4,11 @@ import com.my.validation.ValidationGroups;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-
+/**
+ * DTO для передачи данных о бренде в запросах API.
+ *
+ * @param name название бренда
+ */
 public record BrandRequestDto(
         @NotBlank(message = "Поле name должно быть заполнено",
                 groups = ValidationGroups.Create.class)

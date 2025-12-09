@@ -7,6 +7,9 @@ import lombok.Setter;
 
 import java.util.Objects;
 
+/**
+ * Сущность, представляющая товар.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

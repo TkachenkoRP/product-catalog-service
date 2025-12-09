@@ -5,6 +5,9 @@ import com.my.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Сервисный класс для преобразования идентификаторов в сущности Category.
+ */
 @Service
 public class CategoryMap {
     private final CategoryService categoryService;

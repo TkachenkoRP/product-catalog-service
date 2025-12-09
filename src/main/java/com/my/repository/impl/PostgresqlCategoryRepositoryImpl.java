@@ -16,6 +16,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Реализация репозитория для работы с категориями в PostgreSQL базе данных.
+ */
 @Repository
 public class PostgresqlCategoryRepositoryImpl implements CategoryRepository {
 

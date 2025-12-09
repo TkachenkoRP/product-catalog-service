@@ -4,6 +4,13 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * DTO для передачи данных при регистрации пользователя.
+ *
+ * @param email    электронная почта пользователя
+ * @param username имя пользователя
+ * @param password пароль пользователя
+ */
 public record UserRegisterRequestDto(
         @NotBlank(message = "Поле email должно быть заполнено")
         @Email(message = "Введите корректный email")

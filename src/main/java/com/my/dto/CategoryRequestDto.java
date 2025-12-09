@@ -4,6 +4,11 @@ import com.my.validation.ValidationGroups;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO для передачи данных о категории в запросах API.
+ *
+ * @param name название категории
+ */
 public record CategoryRequestDto(
         @NotBlank(message = "Поле name должно быть заполнено",
                 groups = ValidationGroups.Create.class)

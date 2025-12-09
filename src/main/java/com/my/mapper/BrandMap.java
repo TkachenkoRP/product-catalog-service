@@ -5,6 +5,9 @@ import com.my.service.BrandService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+/**
+ * Сервисный класс для преобразования идентификаторов в сущности Brand.
+ */
 @Service
 public class BrandMap {
     private final BrandService brandService;

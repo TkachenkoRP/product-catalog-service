@@ -17,6 +17,9 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Реализация репозитория для работы с брендами в PostgreSQL базе данных.
+ */
 @Repository
 public class PostgresqlBrandRepositoryImpl implements BrandRepository {
 
@@ -112,8 +115,19 @@ public class PostgresqlBrandRepositoryImpl implements BrandRepository {
         return count != null && count > 0;
     }
 
+    /**
+     * Внутренний класс для преобразования строк ResultSet в объекты Brand.
+     */
     @Transactional(readOnly = true)
     private static class BrandRowMapper implements RowMapper<Brand> {
+        /**
+         * Преобразует строку ResultSet в объект Brand.
+         *
+         * @param rs     ResultSet с данными из базы данных
+         * @param rowNum номер текущей строки
+         * @return объект Brand
+         * @throws SQLException если происходит ошибка при чтении данных из ResultSet
+         */
         @Override
         public Brand mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new Brand(

@@ -5,6 +5,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/**
+ * DTO для передачи данных о пользователе в запросах API.
+ * Используется для создания и обновления пользователей.
+ *
+ * @param email    электронная почта пользователя
+ * @param username имя пользователя
+ * @param password пароль пользователя
+ */
 public record UserRequestDto(
         @NotBlank(message = "Поле email должно быть заполнено", groups = ValidationGroups.Create.class)
         @Email(message = "Введите корректный email", groups = {ValidationGroups.Create.class, ValidationGroups.Update.class})
