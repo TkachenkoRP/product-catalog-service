@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <property name="logDirectory" value="logs"/>
+    <property resource="application.yml" />
+    <springProperty name="auditionEnabled" source="audition.enabled"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] [%marker] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <if condition='property("auditionEnabled").contains("true")'>
+        <then>
+            <appender name="AUDIT_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+                    <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                        <marker>AUDITION</marker>
+                    </evaluator>
+                    <OnMatch>ACCEPT</OnMatch>
+                    <OnMismatch>DENY</OnMismatch>
+                </filter>
+                <file>${logDirectory}/audit.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+                    <fileNamePattern>${logDirectory}/audit.%d{yyyy-MM-dd}.log</fileNamePattern>
+                    <maxHistory>7</maxHistory>
+                </rollingPolicy>
+                <encoder>
+                    <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </appender>
+
+            <appender name="ASYNC_AUDIT" class="ch.qos.logback.classic.AsyncAppender">
+                <appender-ref ref="AUDIT_FILE"/>
+            </appender>
+        </then>
+    </if>
+
+    <appender name="DETAILED_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logDirectory}/detailed.log</file>
+        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
+            <evaluator class="ch.qos.logback.classic.boolex.OnMarkerEvaluator">
+                <marker>LOGGER</marker>
+            </evaluator>
+            <OnMatch>ACCEPT</OnMatch>
+            <OnMismatch>DENY</OnMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${logDirectory}/detailed.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level [%marker] %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="ASYNC_DETAILED" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="DETAILED_FILE"/>
+    </appender>
+
+    <logger name="com.my.myaudit.aspect.AuditAspect" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_AUDIT"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.my.mylogger.aspect.LoggerAspect" level="INFO" additivity="false">
+        <appender-ref ref="ASYNC_DETAILED"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <root level="info">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
