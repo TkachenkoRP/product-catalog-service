@@ -10,6 +10,10 @@ import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Component;
 
+/**
+ * Аспект для логирования выполнения методов, помеченных аннотацией {@link com.my.mylogger.annotation.Loggable}.
+ * Для использования необходимо пометить метод или класс аннотацией {@code @Loggable}.
+ **/
 @Aspect
 @Component
 public class LoggerAspect {

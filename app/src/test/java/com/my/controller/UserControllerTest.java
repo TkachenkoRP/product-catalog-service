@@ -139,7 +139,7 @@ class UserControllerTest {
         UserResponseDto responseDto = InstancioTestEntityFactory.createUserResponseDto(updatedUser);
 
         when(userMapper.toEntity(requestDto)).thenReturn(userEntity);
-        when(userService.update(eq(userId), eq(userEntity))).thenReturn(updatedUser);
+        when(userService.update(userId, userEntity)).thenReturn(updatedUser);
         when(userMapper.toDto(updatedUser)).thenReturn(responseDto);
 
         String response = mockMvc.perform(patch("/api/user/" + userId)

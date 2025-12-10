@@ -251,7 +251,7 @@ class BrandControllerTest {
         BrandResponseDto responseDto = new BrandResponseDto(brandId, "Updated Samsung");
 
         when(brandMapper.toEntity(requestDto)).thenReturn(brandEntity);
-        when(brandService.update(eq(brandId), eq(brandEntity))).thenReturn(updatedBrand);
+        when(brandService.update(brandId, brandEntity)).thenReturn(updatedBrand);
         when(brandMapper.toDto(updatedBrand)).thenReturn(responseDto);
 
         String response = mockMvc.perform(patch("/api/brand/" + brandId)

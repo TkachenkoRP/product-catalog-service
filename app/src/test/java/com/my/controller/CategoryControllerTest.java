@@ -251,7 +251,7 @@ class CategoryControllerTest {
         CategoryResponseDto responseDto = new CategoryResponseDto(categoryId, "Updated Electronics");
 
         when(categoryMapper.toEntity(requestDto)).thenReturn(categoryEntity);
-        when(categoryService.update(eq(categoryId), eq(categoryEntity))).thenReturn(updatedCategory);
+        when(categoryService.update(categoryId, categoryEntity)).thenReturn(updatedCategory);
         when(categoryMapper.toDto(updatedCategory)).thenReturn(responseDto);
 
         String response = mockMvc.perform(patch("/api/category/" + categoryId)

@@ -12,6 +12,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
+/**
+ * Аспект для аудита действий пользователей в контроллерах.
+ **/
 @Aspect
 @Component
 public class AuditAspect {

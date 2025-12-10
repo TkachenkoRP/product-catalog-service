@@ -329,7 +329,7 @@ class ProductControllerTest {
         ProductResponseDto responseDto = new ProductResponseDto(productId, "Updated Product", null, null, 199.99, 15);
 
         when(productMapper.toEntity(requestDto)).thenReturn(productEntity);
-        when(productService.update(eq(productId), eq(productEntity))).thenReturn(updatedProduct);
+        when(productService.update(productId, productEntity)).thenReturn(updatedProduct);
         when(productMapper.toDto(updatedProduct)).thenReturn(responseDto);
 
         String response = mockMvc.perform(patch("/api/product/" + productId)
